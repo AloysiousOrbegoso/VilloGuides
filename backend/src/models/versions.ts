@@ -1,0 +1,1 @@
+// D1 query functions for guide_versions.

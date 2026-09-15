@@ -1,0 +1,11 @@
+# Cloudflare Worker configuration (architecture section 6.2, 6.3, 7.1).
+# TODO once the domain is on Cloudflare:
+#   - routes = ["villoguides.com/*", "*.villoguides.com/*"]
+#   - [[d1_databases]] binding for clients, guides, versions, intake, notes, log
+#   - [[r2_buckets]] binding for guide and intake photos
+#   - [triggers] crons for the jobs in architecture section 13.4
+#   - static assets binding for the built frontend (frontend/dist)
+
+name = "villoguides"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"

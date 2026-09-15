@@ -1,0 +1,3 @@
+# Copied to .dev.vars for local `wrangler dev`. Never set DEV_IDENTITY in production.
+STUDIO_OWNER_EMAIL=owner@villoguides.com
+DEV_IDENTITY=owner@villoguides.com

@@ -1,0 +1,8 @@
+/*
+  Guide renderer styles (architecture sections 3.6 and 5.5).
+  Every rule here must be scoped under .guide so it never leaks into the
+  studio, dashboard, or brand page, and guide theme variables are set on
+  .guide[data-guide-theme] rather than the document root.
+  TODO (Phase 1): port from the Casa de Vista demo (DEMO_ARCHITECTURE.md),
+  swap fonts to EB Garamond and Open Sans.
+*/

@@ -1,0 +1,12 @@
+/*
+  Design tokens and the Tailwind theme (architecture section 3).
+  TODO (Phase 0):
+  - @import "tailwindcss";
+  - @import "@tabler/icons-webfont/dist/tabler-icons.min.css";
+  - @import "./guide.css";
+  - Light and dark CSS custom properties, swapped via [data-theme] on <html>.
+  - @theme inline mapping tokens to Tailwind color names.
+  - Fixed brand palette (charcoal, navy, maroon, off-white, light grey).
+  - Type scale from text-xs to text-5xl.
+  See DESIGN.md for the full token table.
+*/

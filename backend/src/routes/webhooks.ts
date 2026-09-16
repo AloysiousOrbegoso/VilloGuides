@@ -4,6 +4,7 @@ import { verifyXenditToken } from "../services/xendit";
 import { verifyWebhookSignature } from "../services/paypal";
 import { getGuide, markPaid } from "../models/guides";
 import { logActivity } from "../models/audit";
+import { notifyPaid } from "../services/email";
 
 /**
  * /api/webhooks/*, mounted directly in index.ts with no Access gating: these
@@ -46,6 +47,7 @@ webhooks.post("/xendit", async (c) => {
     reference: body.id,
   });
   await logActivity(c.env.DB, { actor: "xendit", action: "payment.recorded", guideId: guide.id, clientId: guide.client_id, detail: { via: "webhook" } });
+  c.executionCtx.waitUntil(notifyPaid(c.env, guide.property_name, "Xendit"));
   return c.json({ ok: true });
 });
 
@@ -87,5 +89,6 @@ webhooks.post("/paypal", async (c) => {
     reference: event.resource.id,
   });
   await logActivity(c.env.DB, { actor: "paypal", action: "payment.recorded", guideId: guide.id, clientId: guide.client_id, detail: { via: "webhook" } });
+  c.executionCtx.waitUntil(notifyPaid(c.env, guide.property_name, "PayPal"));
   return c.json({ ok: true });
 });

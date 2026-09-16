@@ -25,6 +25,15 @@ export type Bindings = {
   RL_REPORT: RateLimit;
 
   /**
+   * Email (architecture 6.2, 6.4). Kept on its own address,
+   * notifications@villoguides.com, never hello@, so a deliverability
+   * problem here never affects mail people actually wrote to reach a
+   * human. Optional: every call site treats an unset key as a silent
+   * no-op, matching the architecture's "optional at launch."
+   */
+  RESEND_API_KEY?: string;
+
+  /**
    * Online payments ("Later" list). Xendit covers GCash, Maya, and bank
    * transfer (InstaPay, which is how a guest paying from any PH bank,
    * SeaBank included, reaches the same checkout); PayPal is a separate

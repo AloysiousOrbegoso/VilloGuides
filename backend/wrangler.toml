@@ -65,6 +65,10 @@ STUDIO_OWNER_EMAIL = "owner@villoguides.com"
 # no credential, only which of PayPal's two environments to call:
 PAYPAL_API_BASE = "https://api-m.sandbox.paypal.com"
 
+# Notification email (architecture 6.2, 6.4). Optional: unset means every
+# notification call silently does nothing, matching "optional at launch."
+#   npx wrangler secret put RESEND_API_KEY
+
 [triggers]
 # Architecture 13.4. Times are UTC; chosen to land in the small hours in the
 # Philippines. The exact minute of each just keeps the four jobs from firing

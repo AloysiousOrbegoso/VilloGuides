@@ -9,6 +9,7 @@ import { requireClientRole } from "../middleware/resolveClient";
 import { buildClientExport } from "../services/clientExport";
 import { createInvoice } from "../services/xendit";
 import { createOrder, captureOrder } from "../services/paypal";
+import { sendNotification, notifyPaid } from "../services/email";
 
 /**
  * {client}.villoguides.com/api/dashboard/* (architecture 9.2). Mounted behind
@@ -83,15 +84,22 @@ dashboard.get("/change-requests", async (c) => c.json(await changeRequests.listC
 dashboard.post("/change-requests", async (c) => {
   const body = await c.req.json<{ guideId: string | null; type: "edit" | "removal"; body: string }>();
   if (body.type === "removal" && c.get("clientRole") !== "admin") return c.json({ error: "Admins only." }, 403);
-  return c.json(
-    await changeRequests.createChangeRequest(c.env.DB, {
-      clientId: c.get("clientId"),
-      guideId: body.guideId,
-      type: body.type,
-      body: body.body,
-      requestedBy: c.get("identity").email,
-    }),
+  const client = await one<{ name: string }>(c.env.DB, `SELECT name FROM clients WHERE id = ?`, c.get("clientId"));
+  const r = await changeRequests.createChangeRequest(c.env.DB, {
+    clientId: c.get("clientId"),
+    guideId: body.guideId,
+    type: body.type,
+    body: body.body,
+    requestedBy: c.get("identity").email,
+  });
+  c.executionCtx.waitUntil(
+    sendNotification(
+      c.env,
+      `New ${body.type === "removal" ? "removal" : "change"} request from ${client?.name ?? "a client"}`,
+      `${c.get("identity").email}: ${body.body}`,
+    ),
   );
+  return c.json(r);
 });
 
 /** Architecture 5.3 and 9.2: admin only. requireClientRole rejects anyone else with 403 before this ever runs. */
@@ -186,5 +194,6 @@ dashboard.post("/new-property/paypal/capture", async (c) => {
     currency: "USD",
     reference: captured.id,
   });
+  c.executionCtx.waitUntil(notifyPaid(c.env, g.property_name, "PayPal"));
   return c.json({ paid: true });
 });

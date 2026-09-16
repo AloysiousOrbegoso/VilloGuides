@@ -5,6 +5,7 @@ import { intakeAnswersSchema } from "../validators/intake";
 import type { IntakeAnswers } from "../services/intakeAnswers";
 import { presignUpload, putUpload } from "../services/storage";
 import { rateLimit, clientIp } from "../middleware/rateLimit";
+import { sendNotification } from "../services/email";
 
 /**
  * forms.villoguides.com/api/intake/:token (architecture 9.3). Public, gated
@@ -26,7 +27,15 @@ intake.put(
 intake.post("/:token/submit", async (c) => {
   const { answers } = await c.req.json<{ answers: unknown }>();
   const parsed = intakeAnswersSchema.parse(answers);
-  return c.json(await submitIntake(c.env, c.req.param("token"), parsed as unknown as IntakeAnswers));
+  const result = await submitIntake(c.env, c.req.param("token")!, parsed as unknown as IntakeAnswers);
+  c.executionCtx.waitUntil(
+    sendNotification(
+      c.env,
+      `New submission: ${result.propertyName}`,
+      `${result.clientName} submitted intake answers for ${result.propertyName}. Review it in the studio's review queue.`,
+    ),
+  );
+  return c.json(result);
 });
 
 intake.post(

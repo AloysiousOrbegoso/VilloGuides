@@ -134,5 +134,6 @@ export async function submitIntake(env: Bindings, token: string, answers: Intake
     clientId: guide.client_id,
     detail: { update: guide.published_version != null },
   });
-  return { ok: true };
+  const client = await one<{ name: string }>(db, `SELECT name FROM clients WHERE id = ?`, guide.client_id);
+  return { ok: true, guideId: link.guide_id, propertyName: content.property.name, clientName: client?.name ?? "" };
 }

@@ -10,3 +10,8 @@ XENDIT_WEBHOOK_TOKEN=PUT_YOUR_XENDIT_WEBHOOK_VERIFICATION_TOKEN
 PAYPAL_CLIENT_ID=PUT_YOUR_PAYPAL_SANDBOX_CLIENT_ID
 PAYPAL_CLIENT_SECRET=PUT_YOUR_PAYPAL_SANDBOX_CLIENT_SECRET
 PAYPAL_WEBHOOK_ID=PUT_YOUR_PAYPAL_SANDBOX_WEBHOOK_ID
+
+# Notification email. Optional: leave unset and every notification call
+# silently does nothing. Also needs Settings > Notification email set in
+# the studio itself, since that's where the "send to" address comes from.
+RESEND_API_KEY=PUT_YOUR_RESEND_API_KEY

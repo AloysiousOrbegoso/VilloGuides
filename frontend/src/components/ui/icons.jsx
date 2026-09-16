@@ -2,6 +2,7 @@
   Icons: Tabler outline webfont for UI and guides, inline SVG for brand marks.
   Use <Icon name="wifi" /> rather than writing the class by hand.
 */
+import logoMark from "../../assets/brand/logo-mark.svg";
 
 export function Icon({ name, className = "", label }) {
   return (
@@ -15,33 +16,30 @@ export function Icon({ name, className = "", label }) {
 }
 
 /**
- * Placeholder brand mark. The final logo files replace this component's contents only:
- * every caller passes a fixed size, so the swap is a file replacement (architecture 3.1).
- * tile: draws the mark on a rounded square (26px nav tile, 44px sign-in tile).
+ * The real logo mark: a charcoal rounded-square tile with the sailboat icon
+ * already baked in (architecture 3.1). Because the tile is part of the image
+ * itself, `tile`/`tileColor` no longer draw anything, they are kept only so
+ * every existing call site (studio sidebar, dashboard top bar, coming soon
+ * pages, intake welcome screen) keeps working unchanged.
+ *
+ * width and height are always set explicitly from `size`, not left to the
+ * browser's intrinsic sizing. That omission was the cause of the logo
+ * rendering oversized in the guide footer.
  */
-/**
- * Real logo, swapped in for the placeholder sailboat mark.
- * tile: draws it on a rounded square (26px nav tile, 44px sign-in tile).
- */
-export function BrandMark({ size = 26, tile = false, tileColor = "var(--navy)", className = "" }) {
-  const glyph = (
-    <img
-      src="/favicon.svg"
-      alt=""
-    />
-  );
-  if (!tile) return <span className={`inline-flex ${className}`}>{glyph}</span>;
+export function BrandMark({ size = 26, className = "" }) {
   return (
-    <span
-      className={`inline-grid place-items-center shrink-0 ${className}`}
-      style={{ width: size, height: size, borderRadius: Math.round(size * 0.24), background: tileColor }}
-    >
-      {glyph}
-    </span>
+    <img
+      src={logoMark}
+      alt=""
+      width={size}
+      height={size}
+      className={className}
+      style={{ display: "block", width: size, height: size }}
+    />
   );
 }
 
-/** Serif wordmark used on public pages. */
+/** Serif wordmark, used only where the logo mark appears without the lockup's built-in text. */
 export function Wordmark({ className = "" }) {
   return <span className={`font-serif font-medium text-black ${className}`}>Villo Guides</span>;
 }

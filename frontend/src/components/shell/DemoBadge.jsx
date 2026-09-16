@@ -14,7 +14,7 @@ export function GuideFooter({ demo = false, managedBy, reportHref }) {
       {demo && <p>This is a sample. Real guides are built for your property.</p>}
       {!demo && managedBy && <p>Managed by {managedBy}</p>}
       <p className="guide-footer__credit">
-        <BrandMark size={14} />
+        <BrandMark size={16} />
         Guide by Villo Guides
       </p>
       {reportHref && (

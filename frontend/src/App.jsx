@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { resolveLocation } from "./lib/hostname";
 import { api, setDevHost } from "./lib/api";
+import { registerServiceWorkerIfGuide } from "./lib/registerServiceWorker";
 import { ToastProvider } from "./components/ui/Toast";
 import { Loading } from "./components/ui/Loading";
 import ComingSoon from "./components/pages/ComingSoon";
@@ -36,11 +37,14 @@ export default function App() {
     if (loc.area === "forms") setDevHost("forms");
   }, [loc]);
 
+  // Computed before any early return, so every hook below always runs in the
+  // same order regardless of how far tenant resolution has gotten. "none"
+  // covers both "still waiting on resolveHost" and "resolved, no such
+  // tenant"; the two are told apart just below, after the hooks.
   let area = loc.area;
   let client = loc.client;
   let slug = loc.slug;
   if (area === "tenant") {
-    if (!tenant) return <Loading full />;
     if (tenant === "client") {
       area = "dashboard";
       client = loc.sub;
@@ -48,9 +52,16 @@ export default function App() {
       area = "guide";
       slug = loc.sub;
     } else {
-      return <ComingSoon variant="notfound" />;
+      area = "none";
     }
   }
+
+  useEffect(() => {
+    registerServiceWorkerIfGuide(area);
+  }, [area]);
+
+  if (loc.area === "tenant" && !tenant) return <Loading full />;
+  if (area === "none") return <ComingSoon variant="notfound" />;
 
   return (
     <ToastProvider>

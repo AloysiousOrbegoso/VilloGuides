@@ -3,7 +3,9 @@ import { QRCodeCanvas } from "qrcode.react";
 import { CONTACT_EMAIL, demoUrl } from "../../../lib/hostname";
 import { KITCHEN_ICON } from "../../../lib/guideSchema";
 import { Button } from "../../ui/Button";
-import { BrandMark, Icon, Wordmark } from "../../ui/icons";
+import { Icon } from "../../ui/icons";
+import logoLockup from "../../../assets/brand/logo-lockup.svg";
+import logoMark from "../../../assets/brand/logo-mark.svg";
 
 /*
   villoguides.com (architecture 5.1). Always light, EB Garamond for headlines,
@@ -13,9 +15,8 @@ import { BrandMark, Icon, Wordmark } from "../../ui/icons";
 export function BrandHeader() {
   return (
     <header className="max-w-[1120px] mx-auto px-5 sm:px-10 pt-7 pb-8 flex items-center justify-between">
-      <Link to="/" className="flex items-center gap-2.5 no-underline text-charcoal">
-        <BrandMark size={30} tile tileColor="#1E1E1E" />
-        <Wordmark className="text-[1.375rem]" />
+      <Link to="/" className="flex items-center no-underline text-charcoal">
+        <img src={logoLockup} alt="Villo Guides" style={{ height: 56, width: "auto", display: "block" }} />
       </Link>
       <nav className="hidden sm:flex gap-9 text-md">
         <a href="#how" className="text-charcoal/80 no-underline hover:text-charcoal">
@@ -123,7 +124,15 @@ export function HowItWorks() {
       <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-10 lg:gap-20 items-start">
         <div>
           <h2 className="font-serif font-normal text-4xl text-black m-0 mb-4 leading-tight">How it works</h2>
-          <p className="text-muted m-0 max-w-sm">You answer questions about the place. We handle the building, checking, and hosting.</p>
+          <p className="text-muted m-0 mb-10 max-w-sm">You answer questions about the place. We handle the building, checking, and hosting.</p>
+            <img
+              src={logoMark}
+              alt=""
+              width={240}
+              height={240}
+              className="ml-14"
+              style={{ display: "block" }}
+            />
         </div>
         <ol className="list-none m-0 p-0 border-t border-[#dcdcd9]">
           {steps.map(([title, body], i) => (

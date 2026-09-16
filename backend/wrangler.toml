@@ -58,8 +58,8 @@ STUDIO_OWNER_EMAIL = "owner@villoguides.com"
 # Philippines. The exact minute of each just keeps the four jobs from firing
 # in the same instant, nothing more significant than that.
 crons = [
-  "0 18 * * *",   # daily: verify every published guide has a valid current version
-  "15 18 * * *",  # daily: expire intake links past expires_at
-  "30 18 * * 0",  # weekly (Sunday): delete orphaned photos in R2
-  "45 18 * * 0",  # weekly (Sunday): export D1 to a private backup location
+  "0 18 * * *",     # daily: verify every published guide has a valid current version
+  "15 18 * * *",    # daily: expire intake links past expires_at
+  "30 18 * * sun",  # weekly (Sunday): delete orphaned photos in R2
+  "45 18 * * sun",  # weekly (Sunday): export D1 to a private backup location
 ]

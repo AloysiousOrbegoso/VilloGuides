@@ -18,7 +18,7 @@ routes = [
 [[d1_databases]]
 binding = "DB"
 database_name = "villoguides"
-database_id = "8d89857b1410f9a7aa6142275e3711fb"
+database_id = "1f4009ec-8a17-4e40-9f11-d68545f6e972"
 
 [[r2_buckets]]
 binding = "PHOTOS"

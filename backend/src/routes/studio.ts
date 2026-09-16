@@ -106,7 +106,7 @@ studio.put("/clients/:id", async (c) => {
 
 studio.post("/clients/:id/users", async (c) => {
   const body = addClientUserSchema.parse(await c.req.json());
-  return c.json(await clientUsers.addClientUser(c.env.DB, c.req.param("id"), body.email, body.role));
+  return c.json(await clientUsers.addClientUser(c.env, c.req.param("id"), body.email, body.role));
 });
 
 studio.put("/client-users/:userId", async (c) => {
@@ -115,7 +115,7 @@ studio.put("/client-users/:userId", async (c) => {
 });
 
 studio.delete("/client-users/:userId", async (c) => {
-  await clientUsers.removeClientUser(c.env.DB, c.req.param("userId"));
+  await clientUsers.removeClientUser(c.env, c.req.param("userId"));
   return c.json({ ok: true });
 });
 

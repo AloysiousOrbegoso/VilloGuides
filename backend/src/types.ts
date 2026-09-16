@@ -59,6 +59,13 @@ export type Bindings = {
    */
   DEV_IDENTITY?: string;
 
+  /**
+   * Automated Access application creation (architecture 7.2's "client
+   * onboarding automation"). Optional: unset means the manual flow (create
+   * the app by hand, paste its AUD into the studio's Clients screen) keeps
+   * working exactly as before. The token needs Account > Access: Apps and
+   * Policies > Edit.
+   */
   CF_ACCOUNT_ID?: string;
   CF_API_TOKEN?: string;
 };

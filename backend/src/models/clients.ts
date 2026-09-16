@@ -1,5 +1,7 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import { many, newId, now, one, run } from "../db";
+import type { Bindings } from "../types";
+import { createClientAccessApp, syncClientAccessPolicy } from "../services/accessApi";
 
 export type ClientRow = {
   id: string;
@@ -12,6 +14,8 @@ export type ClientRow = {
   plan: string;
   dashboard_addon_paid: number;
   access_aud: string | null;
+  access_app_id: string | null;
+  access_policy_id: string | null;
   created_at: string;
 };
 
@@ -63,4 +67,48 @@ export async function isDashboardEligible(db: D1Database, clientId: string) {
   if (!c) return false;
   const paid = await one<{ n: number }>(db, `SELECT COUNT(*) AS n FROM guides WHERE client_id = ? AND paid = 1`, clientId);
   return (paid?.n ?? 0) >= 2 || c.dashboard_addon_paid === 1;
+}
+
+/**
+ * Called from models/clientUsers.ts after any staff change. Creates the
+ * client's Access application the first time it has any staff at all, or
+ * updates the existing policy's Include list to match every time after.
+ * A no-op, and never throws, when CF_API_TOKEN/CF_ACCOUNT_ID are unset, so
+ * the manual "paste an AUD in by hand" flow keeps working unchanged until
+ * these are configured, and a Cloudflare API hiccup here can never break
+ * the actual act of adding or removing a staff email.
+ */
+export async function syncClientAccess(env: Bindings, clientId: string): Promise<void> {
+  const db = env.DB;
+  const client = await one<ClientRow>(db, `SELECT * FROM clients WHERE id = ?`, clientId);
+  if (!client) return;
+
+  const users = await many<{ email: string }>(db, `SELECT email FROM client_users WHERE client_id = ?`, clientId);
+  const emails = users.map((u) => u.email);
+
+  try {
+    let appId = client.access_app_id;
+    let aud = client.access_aud;
+
+    if (!appId) {
+      if (emails.length === 0) return; // nothing to protect yet; wait for the first staff email
+      const created = await createClientAccessApp(env, { clientName: client.name, subdomain: client.subdomain });
+      if (!created) return; // not configured; manual flow still applies
+      appId = created.appId;
+      aud = created.aud;
+    }
+
+    const policyId = await syncClientAccessPolicy(env, { appId, existingPolicyId: client.access_policy_id, emails });
+
+    await run(
+      db,
+      `UPDATE clients SET access_app_id = ?, access_aud = ?, access_policy_id = ? WHERE id = ?`,
+      appId, aud, policyId, clientId,
+    );
+  } catch (err) {
+    // Never let a Cloudflare API problem break the staff change itself,
+    // the same reasoning as every other best-effort side effect in this
+    // codebase (email notifications, cache purges).
+    console.error("syncClientAccess failed:", err);
+  }
 }

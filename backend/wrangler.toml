@@ -76,6 +76,6 @@ PAYPAL_API_BASE = "https://api-m.sandbox.paypal.com"
 crons = [
   "0 18 * * *",   # daily: verify every published guide has a valid current version
   "15 18 * * *",  # daily: expire intake links past expires_at
-  "30 18 * * 0",  # weekly (Sunday): delete orphaned photos in R2
-  "45 18 * * 0",  # weekly (Sunday): export D1 to a private backup location
+  "30 18 * * 7",  # weekly (Sunday): delete orphaned photos in R2
+  "45 18 * * 7",  # weekly (Sunday): export D1 to a private backup location
 ]

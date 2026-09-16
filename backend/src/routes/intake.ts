@@ -1,25 +1,35 @@
 import { Hono } from "hono";
 import type { Bindings, Variables } from "../types";
-import { getIntakeByToken, saveIntakeAnswers } from "../models/intakeLinks";
+import { getIntakeByToken, saveIntakeAnswers, submitIntake } from "../models/intakeLinks";
+import { intakeAnswersSchema } from "../validators/intake";
+import type { IntakeAnswers } from "../services/intakeAnswers";
 import { presignUpload, putUpload } from "../services/storage";
 
 /**
  * forms.villoguides.com/api/intake/:token (architecture 9.3). Public, gated
  * only by the token itself, so no verifyAccess() here.
- * TODO (Phase 3): POST /submit, mapping answers to GuideContent and setting
- * the guide to in_review (architecture 10.1 step 4).
  */
 export const intake = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
-intake.get("/:token", async (c) => c.json(await getIntakeByToken(c.env.DB, c.req.param("token"))));
+intake.get("/:token", async (c) => c.json(await getIntakeByToken(c.env, c.req.param("token"))));
 intake.put("/:token", async (c) => {
   const { answers } = await c.req.json<{ answers: unknown }>();
-  return c.json(await saveIntakeAnswers(c.env.DB, c.req.param("token"), answers));
+  return c.json(await saveIntakeAnswers(c.env, c.req.param("token"), answers));
+});
+
+intake.post("/:token/submit", async (c) => {
+  const { answers } = await c.req.json<{ answers: unknown }>();
+  const parsed = intakeAnswersSchema.parse(answers);
+  return c.json(await submitIntake(c.env, c.req.param("token"), parsed as unknown as IntakeAnswers));
 });
 
 intake.post("/:token/uploads/presign", async (c) => {
   const { contentType, size } = await c.req.json<{ contentType: string; size: number }>();
   const { uploadUrl, key } = await presignUpload(c.env, { contentType, size, area: "intake" });
+  // Same /photos/{filename} path the studio's uploads use (see the shared
+  // route in index.ts, which checks guides/ then intake/). Using one path
+  // for both means a photo's URL in GuideContent never has to change when
+  // promotePhoto moves the underlying object at publish time.
   return c.json({ uploadUrl, url: `/photos/${key.split("/").pop()}` });
 });
 

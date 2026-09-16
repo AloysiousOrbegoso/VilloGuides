@@ -21,65 +21,65 @@ export const studio = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
 studio.get("/me", (c) => c.json({ email: c.get("identity").email }));
 
-studio.get("/queue", async (c) => c.json(await guides.getQueue(c.env.DB)));
-studio.get("/stats", async (c) => c.json(await guides.getStats(c.env.DB)));
+studio.get("/queue", async (c) => c.json(await guides.getQueue(c.env)));
+studio.get("/stats", async (c) => c.json(await guides.getStats(c.env)));
 
 studio.get("/guides", async (c) => {
   const { client: clientId, status, q } = c.req.query();
-  return c.json(await guides.listGuides(c.env.DB, { clientId, status, q }));
+  return c.json(await guides.listGuides(c.env, { clientId, status, q }));
 });
 
 studio.post("/guides", async (c) => {
   const body = await c.req.json<{ clientId: string; propertyName: string; city?: string; ownerName?: string }>();
-  return c.json(await guides.createGuide(c.env.DB, body));
+  return c.json(await guides.createGuide(c.env, body));
 });
 
-studio.get("/guides/:id", async (c) => c.json(await guides.getGuide(c.env.DB, c.req.param("id"))));
+studio.get("/guides/:id", async (c) => c.json(await guides.getGuide(c.env, c.req.param("id"))));
 
 studio.put("/guides/:id/draft", async (c) => {
   const { draft } = await c.req.json<{ draft: unknown }>();
-  return c.json(await guides.saveDraft(c.env.DB, c.req.param("id"), draft));
+  return c.json(await guides.saveDraft(c.env, c.req.param("id"), draft));
 });
 
 studio.patch("/guides/:id", async (c) => {
   const body = await c.req.json<{ city?: string; owner_name?: string }>();
-  return c.json(await guides.updateGuideMeta(c.env.DB, c.req.param("id"), body));
+  return c.json(await guides.updateGuideMeta(c.env, c.req.param("id"), body));
 });
 
-studio.post("/guides/:id/publish", async (c) => c.json(await guides.publishGuide(c.env.DB, c.req.param("id"))));
-studio.post("/guides/:id/unpublish", async (c) => c.json(await guides.unpublishGuide(c.env.DB, c.req.param("id"))));
-studio.post("/guides/:id/suspend", async (c) => c.json(await guides.suspendGuide(c.env.DB, c.req.param("id"))));
+studio.post("/guides/:id/publish", async (c) => c.json(await guides.publishGuide(c.env, c.req.param("id"))));
+studio.post("/guides/:id/unpublish", async (c) => c.json(await guides.unpublishGuide(c.env, c.req.param("id"))));
+studio.post("/guides/:id/suspend", async (c) => c.json(await guides.suspendGuide(c.env, c.req.param("id"))));
 
 studio.post("/guides/:id/rename", async (c) => {
   const { slug } = await c.req.json<{ slug: string }>();
-  return c.json(await guides.renameGuide(c.env.DB, c.req.param("id"), slug));
+  return c.json(await guides.renameGuide(c.env, c.req.param("id"), slug));
 });
 
-studio.get("/guides/:id/versions", async (c) => c.json(await guides.listVersions(c.env.DB, c.req.param("id"))));
+studio.get("/guides/:id/versions", async (c) => c.json(await guides.listVersions(c.env, c.req.param("id"))));
 studio.post("/guides/:id/restore/:version", async (c) =>
-  c.json(await guides.restoreVersion(c.env.DB, c.req.param("id"), Number(c.req.param("version")))),
+  c.json(await guides.restoreVersion(c.env, c.req.param("id"), Number(c.req.param("version")))),
 );
 
 studio.post("/guides/:id/payment", async (c) => {
   const body = markPaidSchema.parse(await c.req.json());
-  return c.json(await guides.markPaid(c.env.DB, c.req.param("id"), body));
+  return c.json(await guides.markPaid(c.env, c.req.param("id"), body));
 });
-studio.delete("/guides/:id/payment", async (c) => c.json(await guides.markUnpaid(c.env.DB, c.req.param("id"))));
+studio.delete("/guides/:id/payment", async (c) => c.json(await guides.markUnpaid(c.env, c.req.param("id"))));
 
 studio.get("/subdomains/:name/available", async (c) => {
   const { guideId, clientId } = c.req.query() as { guideId?: string; clientId?: string };
   return c.json(await checkAvailable(c.env.DB, c.req.param("name"), { guideId, clientId }));
 });
 
-studio.get("/intake-links", async (c) => c.json(await intakeLinks.listIntakeLinks(c.env.DB)));
+studio.get("/intake-links", async (c) => c.json(await intakeLinks.listIntakeLinks(c.env)));
 
 studio.post("/intake-links", async (c) => {
   const body = await c.req.json<{ guideId?: string; clientId?: string; propertyName?: string }>();
   const settings = await one<{ intake_link_days: number }>(c.env.DB, `SELECT intake_link_days FROM settings WHERE id = 1`);
-  return c.json(await intakeLinks.createIntakeLink(c.env.DB, { ...body, expiryDays: settings?.intake_link_days ?? 30 }));
+  return c.json(await intakeLinks.createIntakeLink(c.env, { ...body, expiryDays: settings?.intake_link_days ?? 30 }));
 });
 
-studio.post("/intake-links/:token/expire", async (c) => c.json(await intakeLinks.expireIntakeLink(c.env.DB, c.req.param("token"))));
+studio.post("/intake-links/:token/expire", async (c) => c.json(await intakeLinks.expireIntakeLink(c.env, c.req.param("token"))));
 
 studio.get("/clients", async (c) => c.json(await clients.listClients(c.env.DB)));
 
@@ -114,7 +114,7 @@ studio.delete("/client-users/:userId", async (c) => {
   return c.json({ ok: true });
 });
 
-studio.get("/change-requests", async (c) => c.json(await changeRequests.listAllChangeRequests(c.env.DB)));
+studio.get("/change-requests", async (c) => c.json(await changeRequests.listAllChangeRequests(c.env)));
 
 studio.patch("/change-requests/:id", async (c) => {
   const { status } = await c.req.json<{ status: "done" | "declined" }>();

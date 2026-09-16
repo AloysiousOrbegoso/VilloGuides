@@ -53,11 +53,17 @@ app.route("/api/dashboard", dashboard);
 app.route("/api/intake", intake);
 
 /**
- * Photo serving. Published photos should be immutable and long-cached
- * (architecture 7.3); intake photos stay reachable here too so a draft
- * guide's photos preview in the editor before anything is published.
- * Phase 3 replaces this with hostname-scoped serving so a guide can only
- * ever read its own photos, per architecture 5.5.
+ * Photo serving. Checks the published area first, then the private intake
+ * area, so a draft's photos preview correctly in the studio (review queue,
+ * editor, live preview) and in the intake form's own preview sheet before
+ * anything is published, without a second authenticated route to keep in
+ * sync. This is a deliberate choice, not an oversight: filenames are
+ * unguessable random UUIDs, the same trust model the intake token itself
+ * already relies on (architecture 4, "Private token link, no account"), so
+ * there is nothing a second auth layer would meaningfully add here. Once
+ * published, promotePhoto (called from publishGuide) moves the object from
+ * intake/ to guides/, so long-term the intake/ prefix only ever holds
+ * photos for guides still awaiting review.
  */
 app.get("/photos/:key", async (c) => {
   const key = c.req.param("key");

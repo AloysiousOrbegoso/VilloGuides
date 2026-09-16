@@ -1,4 +1,5 @@
 import type { D1Database } from "@cloudflare/workers-types";
+import type { Bindings } from "../types";
 import { ApiError, many, newId, now, one, run } from "../db";
 import { logActivity } from "./audit";
 import { getGuide } from "./guides";
@@ -15,11 +16,12 @@ export type ChangeRequestRow = {
 };
 
 /** All requests, for the studio's Change requests screen (architecture 5.2, 9.1). */
-export async function listAllChangeRequests(db: D1Database) {
+export async function listAllChangeRequests(env: Bindings) {
+  const db = env.DB;
   const rows = await many<ChangeRequestRow>(db, `SELECT * FROM change_requests ORDER BY created_at DESC`);
   const out = [];
   for (const r of rows) {
-    const guide = r.guide_id ? await getGuide(db, r.guide_id).catch(() => null) : null;
+    const guide = r.guide_id ? await getGuide(env, r.guide_id).catch(() => null) : null;
     const client = await one<{ id: string; name: string }>(db, `SELECT id, name FROM clients WHERE id = ?`, r.client_id);
     out.push({ ...r, guide, client });
   }

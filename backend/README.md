@@ -6,15 +6,17 @@ section 8.1 (data model).
 
 ## Status
 
-Phase 2 complete: D1 migrations and models, hostname resolution, Access
-verification with a dev bypass, and the full studio API. See
-`PHASE2_DEPLOY.md` for exact commands to get this running on your Cloudflare
-account.
+Phase 3 complete: intake submission mapping into a guide, publish-time photo
+promotion from the private intake area to the published area, and edge
+caching (with purge-on-publish) for the public guide endpoint. See
+`PHASE3_NOTES.md` for what changed and how it was tested, and
+`PHASE2_DEPLOY.md` for the original account setup if you haven't done that
+yet.
 
 | Phase | What | State |
 |---|---|---|
 | 2 | Backend foundation: D1, models, hostname resolution, Access, studio API | Done |
-| 3 | Intake submission mapping, scoped photo serving, edge caching | Not started |
+| 3 | Intake submission, photo promotion, edge caching | Done |
 | 4 | Client dashboard: export endpoint | Not started |
 | 5 | Rate limiting, cron jobs, automated Access app creation | Not started |
 

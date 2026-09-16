@@ -1,7 +1,11 @@
 import type { D1Database } from "@cloudflare/workers-types";
+import type { Bindings } from "../types";
 import { ApiError, many, newId, now, one, parseJson, run, toJson } from "../db";
 import { checkFormat, checkAvailable } from "../services/subdomains";
 import { validateGuide } from "../validators/guideContent";
+import { promotePhoto } from "../services/storage";
+import { purgeGuideCache } from "../services/cache";
+import { extractPhotoFilenames } from "../services/photoRefs";
 import { logActivity } from "./audit";
 
 export const MAX_RENAMES = 3;
@@ -48,7 +52,8 @@ async function decorate(db: D1Database, g: GuideRow) {
   };
 }
 
-export async function listGuides(db: D1Database, filter: { clientId?: string; status?: string; q?: string } = {}) {
+export async function listGuides(env: Bindings, filter: { clientId?: string; status?: string; q?: string } = {}) {
+  const db = env.DB;
   const clauses: string[] = [];
   const params: unknown[] = [];
   if (filter.clientId) {
@@ -69,14 +74,15 @@ export async function listGuides(db: D1Database, filter: { clientId?: string; st
   );
 }
 
-export async function getQueue(db: D1Database) {
-  const rows = await listGuides(db, { status: "in_review" });
+export async function getQueue(env: Bindings) {
+  const rows = await listGuides(env, { status: "in_review" });
   return rows
     .map((g) => ({ ...g, kind: g.published_version ? "updated" : "new", submitted_at: g.intake?.submitted_at || g.updated_at }))
     .sort((a, b) => (b.submitted_at || "").localeCompare(a.submitted_at || ""));
 }
 
-export async function getStats(db: D1Database) {
+export async function getStats(env: Bindings) {
+  const db = env.DB;
   const pending = await one<{ n: number }>(db, `SELECT COUNT(*) AS n FROM guides WHERE status = 'in_review'`);
   const published = await one<{ n: number }>(db, `SELECT COUNT(*) AS n FROM guides WHERE status = 'published'`);
   const clients = await one<{ n: number }>(db, `SELECT COUNT(*) AS n FROM clients`);
@@ -84,7 +90,8 @@ export async function getStats(db: D1Database) {
   return { pending: pending?.n ?? 0, published: published?.n ?? 0, clients: clients?.n ?? 0, openRequests: openRequests?.n ?? 0 };
 }
 
-export async function getGuide(db: D1Database, id: string) {
+export async function getGuide(env: Bindings, id: string) {
+  const db = env.DB;
   const row = await one<GuideRow>(db, `SELECT * FROM guides WHERE id = ?`, id);
   if (!row) throw new ApiError("Guide not found.", 404);
   const decorated = await decorate(db, row);
@@ -94,9 +101,10 @@ export async function getGuide(db: D1Database, id: string) {
 }
 
 export async function createGuide(
-  db: D1Database,
+  env: Bindings,
   input: { clientId: string; propertyName: string; city?: string; ownerName?: string; defaultTheme?: string },
 ) {
+  const db = env.DB;
   const client = await one(db, `SELECT id FROM clients WHERE id = ?`, input.clientId);
   if (!client) throw new ApiError("Choose a client.");
   if (!input.propertyName?.trim()) throw new ApiError("Add the property name.");
@@ -119,27 +127,30 @@ export async function createGuide(
     id, input.clientId, toJson(draft), input.ownerName || "", input.city || "", ts, ts,
   );
   await logActivity(db, { actor: "studio", action: "guide.created", guideId: id, clientId: input.clientId });
-  return getGuide(db, id);
+  return getGuide(env, id);
 }
 
-export async function saveDraft(db: D1Database, id: string, draft: unknown) {
+export async function saveDraft(env: Bindings, id: string, draft: unknown) {
+  const db = env.DB;
   const ts = now();
   await run(db, `UPDATE guides SET draft = ?, updated_at = ? WHERE id = ?`, toJson(draft), ts, id);
   return { updated_at: ts };
 }
 
-export async function updateGuideMeta(db: D1Database, id: string, patch: { city?: string; owner_name?: string }) {
+export async function updateGuideMeta(env: Bindings, id: string, patch: { city?: string; owner_name?: string }) {
+  const db = env.DB;
   const fields = Object.entries(patch).filter(([, v]) => v !== undefined);
-  if (fields.length === 0) return getGuide(db, id);
+  if (fields.length === 0) return getGuide(env, id);
   await run(db, `UPDATE guides SET ${fields.map(([k]) => `${k} = ?`).join(", ")}, updated_at = ? WHERE id = ?`, ...fields.map(([, v]) => v), now(), id);
-  return getGuide(db, id);
+  return getGuide(env, id);
 }
 
 export async function markPaid(
-  db: D1Database,
+  env: Bindings,
   id: string,
   input: { method: string; amount: number; currency: string; reference?: string; paidAt?: string },
 ) {
+  const db = env.DB;
   if (!input.method) throw new ApiError("Choose how they paid.");
   if (!(input.amount > 0)) throw new ApiError("Enter the amount received.");
   const guide = await one<GuideRow>(db, `SELECT * FROM guides WHERE id = ?`, id);
@@ -150,19 +161,21 @@ export async function markPaid(
     input.method, Math.round(input.amount), input.currency, input.reference || null, input.paidAt || now(), id,
   );
   await logActivity(db, { actor: "studio", action: "payment.recorded", guideId: id, clientId: guide.client_id, detail: { method: input.method, amount: input.amount } });
-  return getGuide(db, id);
+  return getGuide(env, id);
 }
 
-export async function markUnpaid(db: D1Database, id: string) {
+export async function markUnpaid(env: Bindings, id: string) {
+  const db = env.DB;
   const guide = await one<GuideRow>(db, `SELECT * FROM guides WHERE id = ?`, id);
   if (!guide) throw new ApiError("Guide not found.", 404);
   await run(db, `UPDATE guides SET paid = 0, payment_method = NULL, payment_amount = NULL, payment_currency = NULL, payment_reference = NULL, paid_at = NULL WHERE id = ?`, id);
   await logActivity(db, { actor: "studio", action: "payment.removed", guideId: id, clientId: guide.client_id });
-  return getGuide(db, id);
+  return getGuide(env, id);
 }
 
 /** Publish, unpublish, suspend, rename, restore (architecture 10.2 and 10.4). */
-export async function publishGuide(db: D1Database, id: string) {
+export async function publishGuide(env: Bindings, id: string) {
+  const db = env.DB;
   const guide = await one<GuideRow>(db, `SELECT * FROM guides WHERE id = ?`, id);
   if (!guide) throw new ApiError("Guide not found.", 404);
   if (guide.paid !== 1) throw new ApiError("Record the payment before publishing.");
@@ -175,6 +188,13 @@ export async function publishGuide(db: D1Database, id: string) {
   const format = checkFormat(guide.slug);
   if (format) throw new ApiError(format);
 
+  // Architecture 10.2 step 5: move referenced photos from the private
+  // intake area to the published area before the version is written, so a
+  // guest reading the new version right after publish never hits a photo
+  // that hasn't been moved yet.
+  const filenames = extractPhotoFilenames(draft as Parameters<typeof extractPhotoFilenames>[0]);
+  await Promise.all(filenames.map((f) => promotePhoto(env, f)));
+
   const next = (guide.published_version ?? 0) + 1;
   const ts = now();
   await run(db, `INSERT INTO guide_versions (guide_id, version, content, created_at) VALUES (?, ?, ?, ?)`, id, next, toJson(draft), ts);
@@ -184,33 +204,41 @@ export async function publishGuide(db: D1Database, id: string) {
   if (!historyRow) await run(db, `INSERT INTO slug_history (slug, guide_id, retired_at) VALUES (?, ?, NULL)`, guide.slug, id);
 
   await logActivity(db, { actor: "studio", action: "guide.published", guideId: id, clientId: guide.client_id, detail: { version: next } });
-  return getGuide(db, id);
+  // Architecture 7.3: purged on publish, so guests never wait out the full
+  // 60 second cache window to see a just-published or just-updated guide.
+  await purgeGuideCache(env, guide.slug);
+  return getGuide(env, id);
 }
 
-export async function unpublishGuide(db: D1Database, id: string) {
+export async function unpublishGuide(env: Bindings, id: string) {
+  const db = env.DB;
   const guide = await one<GuideRow>(db, `SELECT * FROM guides WHERE id = ?`, id);
   if (!guide) throw new ApiError("Guide not found.", 404);
   await run(db, `UPDATE guides SET status = 'unpublished', updated_at = ? WHERE id = ?`, now(), id);
   await logActivity(db, { actor: "studio", action: "guide.unpublished", guideId: id, clientId: guide.client_id });
-  return getGuide(db, id);
+  await purgeGuideCache(env, guide.slug ?? "");
+  return getGuide(env, id);
 }
 
-export async function suspendGuide(db: D1Database, id: string) {
+export async function suspendGuide(env: Bindings, id: string) {
+  const db = env.DB;
   const guide = await one<GuideRow>(db, `SELECT * FROM guides WHERE id = ?`, id);
   if (!guide) throw new ApiError("Guide not found.", 404);
   await run(db, `UPDATE guides SET status = 'suspended' WHERE id = ?`, id);
   await logActivity(db, { actor: "studio", action: "guide.suspended", guideId: id, clientId: guide.client_id });
-  return getGuide(db, id);
+  if (guide.slug) await purgeGuideCache(env, guide.slug);
+  return getGuide(env, id);
 }
 
 /** Sets the first slug, or renames a published guide and keeps the old slug redirecting forever. */
-export async function renameGuide(db: D1Database, id: string, slug: string) {
+export async function renameGuide(env: Bindings, id: string, slug: string) {
+  const db = env.DB;
   const guide = await one<GuideRow>(db, `SELECT * FROM guides WHERE id = ?`, id);
   if (!guide) throw new ApiError("Guide not found.", 404);
 
   const format = checkFormat(slug);
   if (format) throw new ApiError(format);
-  if (slug === guide.slug) return getGuide(db, id);
+  if (slug === guide.slug) return getGuide(env, id);
 
   const avail = await checkAvailable(db, slug, { guideId: id });
   if (!avail.available) throw new ApiError(avail.reason ?? "That name is not available.");
@@ -225,10 +253,15 @@ export async function renameGuide(db: D1Database, id: string, slug: string) {
   }
 
   await run(db, `UPDATE guides SET slug = ?, updated_at = ? WHERE id = ?`, slug, now(), id);
-  return getGuide(db, id);
+  // A rename changes which subdomain the cache key lives under, so both the
+  // old and new addresses need a fresh read rather than a stale cached one.
+  if (guide.slug) await purgeGuideCache(env, guide.slug);
+  await purgeGuideCache(env, slug);
+  return getGuide(env, id);
 }
 
-export async function listVersions(db: D1Database, guideId: string) {
+export async function listVersions(env: Bindings, guideId: string) {
+  const db = env.DB;
   const rows = await many<{ id: number; guide_id: string; version: number; content: string; created_at: string }>(
     db,
     `SELECT id, guide_id, version, content, created_at FROM guide_versions WHERE guide_id = ? ORDER BY version DESC`,
@@ -237,7 +270,8 @@ export async function listVersions(db: D1Database, guideId: string) {
   return rows.map(({ content, ...rest }) => ({ ...rest, pages: (parseJson(content, { pages: [] as unknown[] }).pages ?? []).length }));
 }
 
-export async function restoreVersion(db: D1Database, guideId: string, version: number) {
+export async function restoreVersion(env: Bindings, guideId: string, version: number) {
+  const db = env.DB;
   const guide = await one<GuideRow>(db, `SELECT * FROM guides WHERE id = ?`, guideId);
   const row = await one<{ content: string }>(db, `SELECT content FROM guide_versions WHERE guide_id = ? AND version = ?`, guideId, version);
   if (!guide || !row) throw new ApiError("Version not found.", 404);
@@ -251,5 +285,6 @@ export async function restoreVersion(db: D1Database, guideId: string, version: n
     row.content, next, ts, ts, guideId,
   );
   await logActivity(db, { actor: "studio", action: "guide.restored", guideId, clientId: guide.client_id, detail: { from: version, version: next } });
-  return getGuide(db, guideId);
+  if (guide.slug) await purgeGuideCache(env, guide.slug);
+  return getGuide(env, guideId);
 }

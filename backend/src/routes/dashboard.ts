@@ -30,7 +30,7 @@ dashboard.get("/me", async (c) => {
 });
 
 dashboard.get("/guides", async (c) => {
-  const rows = await listGuides(c.env.DB, { clientId: c.get("clientId"), status: "published" });
+  const rows = await listGuides(c.env, { clientId: c.get("clientId"), status: "published" });
   return c.json(
     rows.map((g) => ({
       id: g.id,
@@ -44,7 +44,7 @@ dashboard.get("/guides", async (c) => {
 });
 
 dashboard.get("/guides/:id", async (c) => {
-  const g = await getGuide(c.env.DB, c.req.param("id"));
+  const g = await getGuide(c.env, c.req.param("id"));
   if (g.client_id !== c.get("clientId") || g.status !== "published") return c.json({ error: "Guide not found." }, 404);
   const client = await one<{ name: string }>(c.env.DB, `SELECT name FROM clients WHERE id = ?`, g.client_id);
   return c.json({ id: g.id, slug: g.slug, city: g.city, owner_name: g.owner_name, published_at: g.published_at, content: g.draft, client_name: client?.name ?? "" });

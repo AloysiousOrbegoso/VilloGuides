@@ -39,17 +39,22 @@ export async function putUpload(env: Bindings, key: string, body: ArrayBuffer, c
   await env.PHOTOS.put(key, body, { httpMetadata: { contentType } });
 }
 
-/** Publish step 5 (architecture 10.2): move referenced photos from the private intake area to the published area. */
-export async function moveToPublished(env: Bindings, key: string) {
-  if (!key.startsWith("intake/")) return key;
-  const obj = await env.PHOTOS.get(key);
-  if (!obj) return key;
-  const newKey = key.replace(/^intake\//, "guides/");
-  await env.PHOTOS.put(newKey, obj.body, { httpMetadata: obj.httpMetadata });
-  await env.PHOTOS.delete(key);
-  return newKey;
-}
-
 export async function getPhoto(env: Bindings, key: string) {
   return env.PHOTOS.get(key);
+}
+
+/**
+ * Publish step 5 (architecture 10.2): "Move referenced photos from the
+ * private intake area to the published area in R2." Takes a bare filename
+ * (content only ever stores /photos/{filename}, never a prefix), so it works
+ * whether the photo was uploaded through the studio (already under guides/)
+ * or through an intake form (still under intake/ until this runs).
+ */
+export async function promotePhoto(env: Bindings, filename: string): Promise<void> {
+  const already = await env.PHOTOS.head(`guides/${filename}`);
+  if (already) return;
+  const draft = await env.PHOTOS.get(`intake/${filename}`);
+  if (!draft) return; // nothing to move: removed, or never actually uploaded
+  await env.PHOTOS.put(`guides/${filename}`, draft.body, { httpMetadata: draft.httpMetadata });
+  await env.PHOTOS.delete(`intake/${filename}`);
 }

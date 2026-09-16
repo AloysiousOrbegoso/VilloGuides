@@ -27,6 +27,7 @@ bucket_name = "villoguides-photos"
 [assets]
 directory = "../frontend/dist"
 binding = "ASSETS"
+not_found_handling = "single-page-application"
 
 [vars]
 ROOT_DOMAIN = "villoguides.com"

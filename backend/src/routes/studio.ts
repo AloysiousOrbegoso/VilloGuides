@@ -11,6 +11,7 @@ import { checkAvailable, RESERVED_SUBDOMAINS } from "../services/subdomains";
 import { createClientSchema, updateClientSchema, addClientUserSchema } from "../validators/client";
 import { markPaidSchema } from "../validators/payment";
 import { presignUpload, putUpload } from "../services/storage";
+import { rateLimit } from "../middleware/rateLimit";
 
 /**
  * studio.villoguides.com/api/studio/* (architecture 9.1). Mounted in index.ts
@@ -66,10 +67,14 @@ studio.post("/guides/:id/payment", async (c) => {
 });
 studio.delete("/guides/:id/payment", async (c) => c.json(await guides.markUnpaid(c.env, c.req.param("id"))));
 
-studio.get("/subdomains/:name/available", async (c) => {
-  const { guideId, clientId } = c.req.query() as { guideId?: string; clientId?: string };
-  return c.json(await checkAvailable(c.env.DB, c.req.param("name"), { guideId, clientId }));
-});
+studio.get(
+  "/subdomains/:name/available",
+  rateLimit((env) => env.RL_STANDARD, (c) => `subdomain-check:${c.get("identity").email}`),
+  async (c) => {
+    const { guideId, clientId } = c.req.query() as { guideId?: string; clientId?: string };
+    return c.json(await checkAvailable(c.env.DB, c.req.param("name")!, { guideId, clientId }));
+  },
+);
 
 studio.get("/intake-links", async (c) => c.json(await intakeLinks.listIntakeLinks(c.env)));
 

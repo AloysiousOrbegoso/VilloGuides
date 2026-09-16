@@ -5,12 +5,15 @@ import { corsMiddleware } from "./middleware/cors";
 import { verifyAccess } from "./middleware/verifyAccess";
 import { requireStudioOwner } from "./middleware/requireStudioOwner";
 import { resolveClient } from "./middleware/resolveClient";
+import { withGuideCsp } from "./middleware/csp";
 import { studio } from "./routes/studio";
 import { dashboard } from "./routes/dashboard";
 import { intake } from "./routes/intake";
 import { guide } from "./routes/guide";
 import { report } from "./routes/report";
 import { getPhoto } from "./services/storage";
+import { resolveHostname } from "./services/subdomains";
+import { scheduled } from "./cron";
 
 /**
  * Hostname router (architecture section 7.1). One Worker serves the API and
@@ -78,12 +81,23 @@ app.get("/photos/:key", async (c) => {
 });
 
 app.get("/api/host", async (c) => {
-  const { resolveHostname } = await import("./services/subdomains");
   const sub = c.req.header("X-Villo-Dev-Host") || new URL(c.req.url).hostname.split(".")[0];
   return c.json(await resolveHostname(c.env.DB, sub));
 });
 
-/** Anything not matched above falls through to the built frontend (architecture 7.1). */
-app.get("*", (c) => c.env.ASSETS.fetch(c.req.raw));
+/**
+ * Anything not matched above falls through to the built frontend
+ * (architecture 7.1). A guide (or the reserved demo subdomain) gets the
+ * strict CSP from architecture 12; every other area (brand, studio,
+ * dashboards, forms) is left alone, matching the architecture's own
+ * wording of "CSP on guide pages" rather than guessing at a broader policy.
+ */
+app.get("*", async (c) => {
+  const res = await c.env.ASSETS.fetch(c.req.raw);
+  const sub = c.req.header("X-Villo-Dev-Host") || new URL(c.req.url).hostname.split(".")[0];
+  if (sub === "demo") return withGuideCsp(res);
+  const resolved = await resolveHostname(c.env.DB, sub);
+  return resolved.kind === "guide" ? withGuideCsp(res) : res;
+});
 
-export default app;
+export default { fetch: app.fetch, scheduled };

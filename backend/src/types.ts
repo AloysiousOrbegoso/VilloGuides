@@ -13,6 +13,18 @@ export type Bindings = {
   STUDIO_OWNER_EMAIL: string;
 
   /**
+   * Two budgets, not one: intake autosave, photo uploads, and studio
+   * subdomain checks are all frequent-but-legitimate traffic from one
+   * visitor, so RL_STANDARD is generous. The report endpoint should be rare
+   * from any one visitor, so RL_REPORT is deliberately tight (architecture
+   * 12: "Rate limits on intake autosave, uploads, subdomain checks, and
+   * reports"). Declared directly in wrangler.toml; no separate Cloudflare
+   * resource to create.
+   */
+  RL_STANDARD: RateLimit;
+  RL_REPORT: RateLimit;
+
+  /**
    * Set only in .dev.vars for local `wrangler dev`. When present, requests are
    * treated as if this email had passed Cloudflare Access, so the studio and
    * dashboards can be exercised without a real Access session. Architecture 7.2

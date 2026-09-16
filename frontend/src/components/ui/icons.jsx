@@ -19,12 +19,19 @@ export function Icon({ name, className = "", label }) {
  * every caller passes a fixed size, so the swap is a file replacement (architecture 3.1).
  * tile: draws the mark on a rounded square (26px nav tile, 44px sign-in tile).
  */
+/**
+ * Real logo, swapped in for the placeholder sailboat mark.
+ * tile: draws it on a rounded square (26px nav tile, 44px sign-in tile).
+ */
 export function BrandMark({ size = 26, tile = false, tileColor = "var(--navy)", className = "" }) {
   const glyph = (
-    <svg width={tile ? Math.round(size * 0.54) : size} height={tile ? Math.round(size * 0.54) : size} viewBox="0 0 132 132" fill="none" aria-hidden="true">
-      <rect x="34" y="18" width="64" height="96" rx="4" stroke={tile ? "#E5E5EA" : "currentColor"} strokeWidth="10" />
-      <circle cx="76" cy="66" r="10" fill="#B33A3A" />
-    </svg>
+    <img
+      src="/favicon.svg"
+      alt=""
+      width={tile ? Math.round(size * 0.6) : size}
+      height={tile ? Math.round(size * 0.6) : size}
+      style={{ display: "block", objectFit: "contain" }}
+    />
   );
   if (!tile) return <span className={`inline-flex ${className}`}>{glyph}</span>;
   return (

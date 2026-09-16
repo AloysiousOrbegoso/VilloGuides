@@ -6,18 +6,28 @@ section 8.1 (data model).
 
 ## Status
 
-Phase 4 complete: the client dashboard's export endpoint (a real ZIP, built
-with `fflate`), plus a bug fix so the dashboard shows a guide's actual
-published content rather than an in-progress draft. See `PHASE4_NOTES.md`
-for details and how it was tested, `PHASE3_NOTES.md` and `PHASE2_DEPLOY.md`
-for everything before it.
+Phase 5 complete: rate limits, Content Security Policy on guide pages, and
+the four cron jobs from architecture 13.4. This was the last phase in the
+architecture's own numbered build-out list. See `PHASE5_NOTES.md` for two
+real bugs found and fixed while building it, and how everything was tested.
+`PHASE2_DEPLOY.md` still covers initial account setup if you haven't done
+that yet.
 
 | Phase | What | State |
 |---|---|---|
 | 2 | Backend foundation: D1, models, hostname resolution, Access, studio API | Done |
 | 3 | Intake submission, photo promotion, edge caching | Done |
 | 4 | Client dashboard export, published-content correctness fix | Done |
-| 5 | Rate limiting, cron jobs, automated Access app creation | Not started |
+| 5 | Rate limits, CSP, cron jobs | Done |
+
+What's left is everything the architecture calls "Later" rather than a
+numbered phase: Google sign-in for Access, online payments, a PIN-protected
+private block for door codes, white-label domains, additional languages,
+and automating per-client Access application creation (currently manual
+and working). Also still open: the frontend's missing offline service
+worker (flagged in `PHASE3_NOTES.md`), and an actual real-device pass,
+which the architecture calls for by name and isn't something to check from
+a backend session.
 
 ## Structure
 

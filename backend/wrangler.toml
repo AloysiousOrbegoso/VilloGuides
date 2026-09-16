@@ -1,8 +1,4 @@
 # Cloudflare Worker configuration (architecture 6.2, 6.3, 7.1).
-# The [[d1_databases]] and [[r2_buckets]] "database_id" and nothing-needed-for-R2
-# below are placeholders. Run the commands in the Phase 2 README section to
-# create the real resources, then paste the IDs wrangler prints back here.
-
 name = "villoguides"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
@@ -18,21 +14,52 @@ routes = [
 [[d1_databases]]
 binding = "DB"
 database_name = "villoguides"
-database_id = "REPLACE_AFTER_WRANGLER_D1_CREATE"
+database_id = "1f4009ec-8a17-4e40-9f11-d68545f6e972"
 
 [[r2_buckets]]
 binding = "PHOTOS"
 bucket_name = "villoguides-photos"
 
+# Rate limiting (architecture 12). No separate Cloudflare resource to
+# create; these provision automatically on deploy. namespace_id is just an
+# integer you choose, unique within this account. Period must be 10 or 60.
+[[unsafe.bindings]]
+name = "RL_STANDARD"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 30, period = 10 }
+
+[[unsafe.bindings]]
+name = "RL_REPORT"
+type = "ratelimit"
+namespace_id = "1002"
+simple = { limit = 5, period = 60 }
+
 [assets]
 directory = "../frontend/dist"
 binding = "ASSETS"
+not_found_handling = "single-page-application"
+# Without this, Cloudflare serves any matching static file directly and the
+# Worker's own fetch handler never runs at all for it, which is exactly the
+# case for every HTML document request (including "/", which matches
+# index.html literally). That silently made the CSP-wrapping catch-all
+# route in index.ts unreachable for the very requests it exists to handle.
+# Scoped to exclude /assets/*, where every built JS/CSS/font file lives, so
+# this doesn't add a database lookup to every sub-resource on a page, only
+# to actual document-level navigations.
+run_worker_first = ["/*", "!/assets/*"]
 
 [vars]
 ROOT_DOMAIN = "villoguides.com"
 STUDIO_OWNER_EMAIL = "owner@villoguides.com"
 
 [triggers]
-# Filled in during Phase 5 (architecture 13.4): daily version check, weekly
-# orphaned-photo cleanup, weekly D1 backup, daily intake link expiry.
-crons = []
+# Architecture 13.4. Times are UTC; chosen to land in the small hours in the
+# Philippines. The exact minute of each just keeps the four jobs from firing
+# in the same instant, nothing more significant than that.
+crons = [
+  "0 18 * * *",   # daily: verify every published guide has a valid current version
+  "15 18 * * *",  # daily: expire intake links past expires_at
+  "30 18 * * 0",  # weekly (Sunday): delete orphaned photos in R2
+  "45 18 * * 0",  # weekly (Sunday): export D1 to a private backup location
+]

@@ -6,18 +6,17 @@ section 8.1 (data model).
 
 ## Status
 
-Phase 3 complete: intake submission mapping into a guide, publish-time photo
-promotion from the private intake area to the published area, and edge
-caching (with purge-on-publish) for the public guide endpoint. See
-`PHASE3_NOTES.md` for what changed and how it was tested, and
-`PHASE2_DEPLOY.md` for the original account setup if you haven't done that
-yet.
+Phase 4 complete: the client dashboard's export endpoint (a real ZIP, built
+with `fflate`), plus a bug fix so the dashboard shows a guide's actual
+published content rather than an in-progress draft. See `PHASE4_NOTES.md`
+for details and how it was tested, `PHASE3_NOTES.md` and `PHASE2_DEPLOY.md`
+for everything before it.
 
 | Phase | What | State |
 |---|---|---|
 | 2 | Backend foundation: D1, models, hostname resolution, Access, studio API | Done |
 | 3 | Intake submission, photo promotion, edge caching | Done |
-| 4 | Client dashboard: export endpoint | Not started |
+| 4 | Client dashboard export, published-content correctness fix | Done |
 | 5 | Rate limiting, cron jobs, automated Access app creation | Not started |
 
 ## Structure

@@ -4,14 +4,14 @@ import { getGuide, listGuides } from "../models/guides";
 import * as notes from "../models/notes";
 import * as changeRequests from "../models/changeRequests";
 import { isDashboardEligible } from "../models/clients";
+import { requireClientRole } from "../middleware/resolveClient";
+import { buildClientExport } from "../services/clientExport";
 import { one } from "../db";
 
 /**
  * {client}.villoguides.com/api/dashboard/* (architecture 9.2). Mounted behind
  * verifyAccess() and resolveClient() in index.ts, so c.get("clientId") and
  * c.get("clientRole") are already scoped to the signed-in client's staff member.
- * Phase 4 fills this in fully; the read paths below are enough for Phase 2's
- * studio-first pass to exercise end to end.
  */
 export const dashboard = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
@@ -43,11 +43,31 @@ dashboard.get("/guides", async (c) => {
   );
 });
 
+/**
+ * Architecture 5.3: "Open guide as a guest sees it." Reads the actual
+ * published version's content, not the current draft, so a client never
+ * sees edits the studio has made but not yet republished.
+ */
 dashboard.get("/guides/:id", async (c) => {
   const g = await getGuide(c.env, c.req.param("id"));
-  if (g.client_id !== c.get("clientId") || g.status !== "published") return c.json({ error: "Guide not found." }, 404);
+  if (g.client_id !== c.get("clientId") || g.status !== "published" || !g.published_version) {
+    return c.json({ error: "Guide not found." }, 404);
+  }
+  const version = await one<{ content: string }>(
+    c.env.DB,
+    `SELECT content FROM guide_versions WHERE guide_id = ? AND version = ?`,
+    g.id, g.published_version,
+  );
   const client = await one<{ name: string }>(c.env.DB, `SELECT name FROM clients WHERE id = ?`, g.client_id);
-  return c.json({ id: g.id, slug: g.slug, city: g.city, owner_name: g.owner_name, published_at: g.published_at, content: g.draft, client_name: client?.name ?? "" });
+  return c.json({
+    id: g.id,
+    slug: g.slug,
+    city: g.city,
+    owner_name: g.owner_name,
+    published_at: g.published_at,
+    content: JSON.parse(version?.content ?? "{}"),
+    client_name: client?.name ?? "",
+  });
 });
 
 dashboard.get("/guides/:id/notes", async (c) => c.json(await notes.listNotes(c.env.DB, c.req.param("id"))));
@@ -72,4 +92,15 @@ dashboard.post("/change-requests", async (c) => {
   );
 });
 
-// TODO (Phase 4): GET /export, a ZIP of a client's published content and photos.
+/** Architecture 5.3 and 9.2: admin only. requireClientRole rejects anyone else with 403 before this ever runs. */
+dashboard.get("/export", requireClientRole("admin"), async (c) => {
+  const clientId = c.get("clientId");
+  const client = await one<{ subdomain: string }>(c.env.DB, `SELECT subdomain FROM clients WHERE id = ?`, clientId);
+  const zip = await buildClientExport(c.env, clientId);
+  return new Response(zip, {
+    headers: {
+      "Content-Type": "application/zip",
+      "Content-Disposition": `attachment; filename="${client?.subdomain ?? "export"}-guides.zip"`,
+    },
+  });
+});

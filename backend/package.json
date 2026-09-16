@@ -3,24 +3,21 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-  "dev": "wrangler dev",
-  "deploy": "wrangler deploy",
-  "typecheck": "tsc --noEmit"
-},
-"dependencies": {
-  "hono": "^4.6.0",
-  "zod": "^3.24.0"
-},
-"devDependencies": {
-  "@cloudflare/workers-types": "^5.0.0",
-  "typescript": "^5.7.0",
-  "wrangler": "^4.0.0"
-},
-  "allowScripts": {
-    "esbuild@0.17.19": true,
-    "esbuild@0.21.5": true,
-    "sharp@0.33.5": true,
-    "workerd@1.20250204.0": true,
-    "workerd@1.20250718.0": true
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3",
+    "hono": "^4.6.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.6.0",
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0",
+    "wrangler": "^3.99.0"
   }
 }

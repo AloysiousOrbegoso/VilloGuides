@@ -18,7 +18,7 @@ routes = [
 [[d1_databases]]
 binding = "DB"
 database_name = "villoguides"
-database_id = "1f4009ec-8a17-4e40-9f11-d68545f6e972"
+database_id = "REPLACE_AFTER_WRANGLER_D1_CREATE"
 
 [[r2_buckets]]
 binding = "PHOTOS"
@@ -27,7 +27,6 @@ bucket_name = "villoguides-photos"
 [assets]
 directory = "../frontend/dist"
 binding = "ASSETS"
-not_found_handling = "single-page-application"
 
 [vars]
 ROOT_DOMAIN = "villoguides.com"

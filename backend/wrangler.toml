@@ -1,11 +1,38 @@
-# Cloudflare Worker configuration (architecture section 6.2, 6.3, 7.1).
-# TODO once the domain is on Cloudflare:
-#   - routes = ["villoguides.com/*", "*.villoguides.com/*"]
-#   - [[d1_databases]] binding for clients, guides, versions, intake, notes, log
-#   - [[r2_buckets]] binding for guide and intake photos
-#   - [triggers] crons for the jobs in architecture section 13.4
-#   - static assets binding for the built frontend (frontend/dist)
+# Cloudflare Worker configuration (architecture 6.2, 6.3, 7.1).
+# The [[d1_databases]] and [[r2_buckets]] "database_id" and nothing-needed-for-R2
+# below are placeholders. Run the commands in the Phase 2 README section to
+# create the real resources, then paste the IDs wrangler prints back here.
 
 name = "villoguides"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Routes on the real domain. Both the root domain and every subdomain hit this
+# one Worker; src/index.ts decides what to render from the hostname.
+routes = [
+  { pattern = "villoguides.com/*", zone_name = "villoguides.com" },
+  { pattern = "*.villoguides.com/*", zone_name = "villoguides.com" },
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "villoguides"
+database_id = "1f4009ec-8a17-4e40-9f11-d68545f6e972"
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "villoguides-photos"
+
+[assets]
+directory = "../frontend/dist"
+binding = "ASSETS"
+
+[vars]
+ROOT_DOMAIN = "villoguides.com"
+STUDIO_OWNER_EMAIL = "owner@villoguides.com"
+
+[triggers]
+# Filled in during Phase 5 (architecture 13.4): daily version check, weekly
+# orphaned-photo cleanup, weekly D1 backup, daily intake link expiry.
+crons = []

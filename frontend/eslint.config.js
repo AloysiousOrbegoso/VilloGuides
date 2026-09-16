@@ -16,6 +16,8 @@ export default [
     rules: {
       ...js.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
+      // Components used only inside JSX start with a capital letter, including ones
+      // renamed from props such as ({ as: Tag }).
       "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]", argsIgnorePattern: "^(_|[A-Z])" }],
       "react-refresh/only-export-components": "off",
     },

@@ -1,12 +1,177 @@
+@import "tailwindcss";
+@import "@tabler/icons-webfont/dist/tabler-icons.min.css";
+@import "./guide.css";
+
 /*
-  Design tokens and the Tailwind theme (architecture section 3).
-  TODO (Phase 0):
-  - @import "tailwindcss";
-  - @import "@tabler/icons-webfont/dist/tabler-icons.min.css";
-  - @import "./guide.css";
-  - Light and dark CSS custom properties, swapped via [data-theme] on <html>.
-  - @theme inline mapping tokens to Tailwind color names.
-  - Fixed brand palette (charcoal, navy, maroon, off-white, light grey).
-  - Type scale from text-xs to text-5xl.
-  See DESIGN.md for the full token table.
+  VilloGuides design tokens. See DESIGN.md for how to use them.
+
+  Studio, client dashboard, brand page, and intake form read these tokens.
+  Published guides do not: they use the property's own palette from guide.css.
+  Light and dark mode swap through data-theme on <html> (src/lib/theme.js).
 */
+
+:root,
+[data-theme="light"] {
+  --bg: #f4f4f2;
+  --sidebar: #1e1e1e;
+  --card: #ffffff;
+  --border: #e2e2df;
+  --border-soft: #ededeb;
+  --text: #1e1e1e;
+  --muted: #6b6b68;
+  --faint: #a3a3a0;
+  --navy: #032747;
+  --navy-soft: #e8ecf0;
+  --link: #032747;
+  --accent: #830000;
+  --on-accent: #f4e9e9;
+  --field: #fafaf9;
+  --pill: #f7e9e9;
+  --pill-text: #830000;
+  --nav-text: #e5e5ea;
+  --nav-muted: #9a9a97;
+  --ok: #2f5d46;
+  --ok-soft: #e7efe9;
+  --warn-bg: #fbf3e4;
+  --warn-line: #ead7b2;
+  --warn-text: #6a4a12;
+  --scrim: rgba(20, 20, 20, 0.45);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #141414;
+  --sidebar: #101112;
+  --card: #1d1d1d;
+  --border: #2c2c2c;
+  --border-soft: #252525;
+  --text: #e5e5ea;
+  --muted: #9a9a97;
+  --faint: #6a6a67;
+  --navy: #1c5a86;
+  --navy-soft: #1a2530;
+  --link: #8db7d6;
+  --accent: #b33a3a;
+  --on-accent: #f4e9e9;
+  --field: #232323;
+  --pill: #3a2323;
+  --pill-text: #e5a5a5;
+  --nav-text: #e5e5ea;
+  --nav-muted: #78786f;
+  --ok: #7db396;
+  --ok-soft: #1c2a22;
+  --warn-bg: #29241a;
+  --warn-line: #4d4230;
+  --warn-text: #e3c98f;
+  --scrim: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: "Open Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "EB Garamond", Georgia, serif;
+
+  /* Mode-aware colors */
+  --color-canvas: var(--bg);
+  --color-sidebar: var(--sidebar);
+  --color-card: var(--card);
+  --color-line: var(--border);
+  --color-line-soft: var(--border-soft);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-link: var(--link);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-field: var(--field);
+  --color-pill: var(--pill);
+  --color-pill-ink: var(--pill-text);
+  --color-nav-ink: var(--nav-text);
+  --color-nav-muted: var(--nav-muted);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-line: var(--warn-line);
+  --color-warn-ink: var(--warn-text);
+  --color-scrim: var(--scrim);
+}
+
+@theme {
+  /* Fixed brand palette from the logo (brand page, print, marks) */
+  --color-charcoal: #1e1e1e;
+  --color-brand-navy: #032747;
+  --color-maroon: #830000;
+  --color-offwhite: #e5e5ea;
+  --color-lightgrey: #d9d9d9;
+  --color-paper: #f4f4f2;
+
+  /* Type scale. Internal tools use xs to 2xl. Public pages use up to 5xl. */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.45;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.55;
+  --text-md: 0.9375rem;
+  --text-md--line-height: 1.6;
+  --text-lg: 1rem;
+  --text-lg--line-height: 1.6;
+  --text-xl: 1.125rem;
+  --text-xl--line-height: 1.5;
+  --text-2xl: 1.625rem;
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 2.125rem;
+  --text-3xl--line-height: 1.12;
+  --text-4xl: 2.75rem;
+  --text-4xl--line-height: 1.1;
+  --text-5xl: 4rem;
+  --text-5xl--line-height: 1.02;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 2px solid var(--navy);
+    outline-offset: 2px;
+  }
+  .ti {
+    line-height: 1;
+  }
+}
+
+/* Printable QR sign: only the sign is printed */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-sign,
+  .print-sign * {
+    visibility: visible;
+  }
+  .print-sign {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+  }
+}

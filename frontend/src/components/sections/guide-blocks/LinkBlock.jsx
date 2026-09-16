@@ -1,2 +1,11 @@
-// LinkBlock: one guide content block (architecture 8.2 block types).
-export {};
+export function LinkBlock({ label, href, description }) {
+  return (
+    <a className="block action-row" href={href} target="_blank" rel="noopener noreferrer">
+      <i className="ti ti-external-link action-row__icon" aria-hidden="true" />
+      <span className="action-row__body">
+        <span className="action-row__label">{label}</span>
+        {description && <span className="action-row__detail">{description}</span>}
+      </span>
+    </a>
+  );
+}

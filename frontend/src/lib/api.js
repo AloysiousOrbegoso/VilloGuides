@@ -113,6 +113,9 @@ const liveApi = {
   addNote: (id, body) => post(`${D}/guides/${id}/notes`, { body }),
   listDashboardRequests: () => get(`${D}/change-requests`),
   createChangeRequest: (_sub, b) => post(`${D}/change-requests`, b),
+  startPropertyCheckout: (_sub, b) => post(`${D}/new-property/checkout`, b),
+  getNewPropertyStatus: (_sub, guideId) => get(`${D}/new-property/status/${guideId}`),
+  capturePaypalOrder: (_sub, b) => post(`${D}/new-property/paypal/capture`, b),
   exportClient: async () => {
     const res = await request("GET", `${D}/export`, undefined, { raw: true });
     return res.blob();

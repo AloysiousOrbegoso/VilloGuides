@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Architecture 12: "the sitemap lists only the root brand page." Every guide
+  is guest-published on its own subdomain, never indexed (noindex header),
+  and never belongs here; client dashboards, the studio, and the intake form
+  are all private and don't belong here either.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://villoguides.com/</loc>
+  </url>
+</urlset>

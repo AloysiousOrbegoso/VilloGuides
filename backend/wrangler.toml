@@ -1,4 +1,5 @@
 # Cloudflare Worker configuration (architecture 6.2, 6.3, 7.1).
+
 name = "villoguides"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
@@ -53,13 +54,24 @@ run_worker_first = ["/*", "!/assets/*"]
 ROOT_DOMAIN = "villoguides.com"
 STUDIO_OWNER_EMAIL = "owner@villoguides.com"
 
+# Online payments (architecture "Later" list). These five are secrets, not
+# plain vars: never put real values in this file. Set each with:
+#   npx wrangler secret put XENDIT_SECRET_KEY
+#   npx wrangler secret put XENDIT_WEBHOOK_TOKEN
+#   npx wrangler secret put PAYPAL_CLIENT_ID
+#   npx wrangler secret put PAYPAL_CLIENT_SECRET
+#   npx wrangler secret put PAYPAL_WEBHOOK_ID
+# PAYPAL_API_BASE is the one exception, safe as a plain var since it holds
+# no credential, only which of PayPal's two environments to call:
+PAYPAL_API_BASE = "https://api-m.sandbox.paypal.com"
+
 [triggers]
 # Architecture 13.4. Times are UTC; chosen to land in the small hours in the
 # Philippines. The exact minute of each just keeps the four jobs from firing
 # in the same instant, nothing more significant than that.
 crons = [
-  "0 18 * * *",     # daily: verify every published guide has a valid current version
-  "15 18 * * *",    # daily: expire intake links past expires_at
-  "30 18 * * sun",  # weekly (Sunday): delete orphaned photos in R2
-  "45 18 * * sun",  # weekly (Sunday): export D1 to a private backup location
+  "0 18 * * *",   # daily: verify every published guide has a valid current version
+  "15 18 * * *",  # daily: expire intake links past expires_at
+  "30 18 * * 0",  # weekly (Sunday): delete orphaned photos in R2
+  "45 18 * * 0",  # weekly (Sunday): export D1 to a private backup location
 ]

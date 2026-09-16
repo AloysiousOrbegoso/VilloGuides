@@ -25,6 +25,24 @@ export type Bindings = {
   RL_REPORT: RateLimit;
 
   /**
+   * Online payments ("Later" list). Xendit covers GCash, Maya, and bank
+   * transfer (InstaPay, which is how a guest paying from any PH bank,
+   * SeaBank included, reaches the same checkout); PayPal is a separate
+   * gateway with its own credentials and its own webhook. All five are
+   * secrets (`wrangler secret put NAME`), never plain [vars], since they
+   * grant the ability to move money or spoof a paid confirmation.
+   */
+  XENDIT_SECRET_KEY: string;
+  XENDIT_WEBHOOK_TOKEN: string;
+  PAYPAL_CLIENT_ID: string;
+  PAYPAL_CLIENT_SECRET: string;
+  PAYPAL_WEBHOOK_ID: string;
+  /** https://api-m.sandbox.paypal.com while testing, https://api-m.paypal.com once live. Defaults to sandbox if unset. */
+  PAYPAL_API_BASE?: string;
+  /** Override point for local testing against a stub server standing in for Xendit; unset in every real environment. */
+  XENDIT_API_BASE?: string;
+
+  /**
    * Set only in .dev.vars for local `wrangler dev`. When present, requests are
    * treated as if this email had passed Cloudflare Access, so the studio and
    * dashboards can be exercised without a real Access session. Architecture 7.2

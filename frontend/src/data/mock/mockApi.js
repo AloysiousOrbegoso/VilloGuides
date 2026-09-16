@@ -2,7 +2,7 @@ import imageCompression from "browser-image-compression";
 import { buildSeed, MOCK_STUDIO_OWNER } from "./seed";
 import { migrate, validateGuide, emptyGuide } from "../../lib/guideSchema";
 import { emptyAnswers, mapIntakeToGuide } from "../../lib/intakeMapper";
-import { RESERVED_SUBDOMAINS, checkSubdomainFormat } from "../../lib/hostname";
+import { RESERVED_SUBDOMAINS, checkSubdomainFormat, dashboardUrl } from "../../lib/hostname";
 
 /*
   Mock API for Phase 1. Same function names and return shapes as the live API in
@@ -536,6 +536,37 @@ export const mockApi = {
     log("change_request.created", { guide_id: guideId, client_id: c.id, actor: requestedBy, detail: { type } });
     persist();
     return wait(r);
+  },
+
+  /**
+   * Mock stands in for both real gateways: no external redirect, no keys
+   * needed. Creates the draft guide, marks it paid immediately, and points
+   * straight at the app's own "complete" page so the same UI that would run
+   * against a real Xendit or PayPal redirect can still be exercised here.
+   */
+  async startPropertyCheckout(sub, { provider, propertyName, city }) {
+    const c = db.clients.find((x) => x.subdomain === sub);
+    if (!c) return fail("Not found.", 404);
+    if (!propertyName?.trim()) return fail("Add the property name.");
+    const guide = await mockApi.createGuide({ clientId: c.id, propertyName, city });
+    await mockApi.markPaid(guide.id, {
+      method: provider === "paypal" ? "PayPal" : "Xendit (sample)",
+      amount: provider === "paypal" ? 1500 : 85000,
+      currency: provider === "paypal" ? "USD" : "PHP",
+      reference: `MOCK-${guide.id}`,
+    });
+    return wait({ redirectUrl: dashboardUrl(sub, `/requests/new-property/complete?provider=${provider}&guide=${guide.id}&mock=1`) });
+  },
+
+  async getNewPropertyStatus(_sub, guideId) {
+    const g = guideById(guideId);
+    if (!g) return fail("Not found.", 404);
+    return wait({ paid: g.paid === 1, status: g.status, property_name: g.draft?.property?.name });
+  },
+
+  /** Real PayPal capture has no mock equivalent worth simulating separately; startPropertyCheckout already marks it paid. */
+  async capturePaypalOrder(_sub, { guideId }) {
+    return mockApi.getNewPropertyStatus(_sub, guideId);
   },
 
   async listDashboardRequests(sub) {

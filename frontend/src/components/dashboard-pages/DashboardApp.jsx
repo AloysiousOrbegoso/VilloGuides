@@ -7,7 +7,7 @@ import { DashboardBody, TopBar } from "../sections/dashboard/DashboardParts";
 import { EmptyState, Panel } from "../ui/Table";
 import Directory from "./Directory";
 import GuideDetail from "./GuideDetail";
-import RequestChange, { RequestList } from "./RequestChange";
+import RequestChange, { NewPropertyComplete, RequestList } from "./RequestChange";
 import Export from "./Export";
 import { useEffect } from "react";
 
@@ -36,6 +36,7 @@ export default function DashboardApp({ client }) {
           <Route index element={<Directory me={data} />} />
           <Route path="guides/:id" element={<GuideDetail me={data} />} />
           <Route path="requests" element={<RequestList me={data} />} />
+          <Route path="requests/new-property/complete" element={<NewPropertyComplete me={data} />} />
           <Route path="requests/:type/:guideId?" element={<RequestChange me={data} />} />
           <Route path="export" element={data.user.role === "admin" ? <Export me={data} /> : <Directory me={data} />} />
           <Route path="*" element={<Directory me={data} />} />

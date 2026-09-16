@@ -1,3 +1,5 @@
+import { isSafeExternalUrl } from "../../lib/links";
+
 export function PlacesList({ places }) {
   return (
     <ul className="places">
@@ -8,10 +10,12 @@ export function PlacesList({ places }) {
             <span className="place__category">{p.category}</span>
           </div>
           <p className="place__note">{p.note}</p>
-          <a className="place__link" href={p.mapsUrl} target="_blank" rel="noopener noreferrer">
-            <i className="ti ti-map-2" aria-hidden="true" />
-            Open in Google Maps
-          </a>
+          {isSafeExternalUrl(p.mapsUrl) && (
+            <a className="place__link" href={p.mapsUrl} target="_blank" rel="noopener noreferrer">
+              <i className="ti ti-map-2" aria-hidden="true" />
+              Open in Google Maps
+            </a>
+          )}
         </li>
       ))}
     </ul>

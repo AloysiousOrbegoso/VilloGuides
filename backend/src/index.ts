@@ -11,6 +11,7 @@ import { dashboard } from "./routes/dashboard";
 import { intake } from "./routes/intake";
 import { guide } from "./routes/guide";
 import { report } from "./routes/report";
+import { webhooks } from "./routes/webhooks";
 import { getPhoto } from "./services/storage";
 import { resolveHostname } from "./services/subdomains";
 import { scheduled } from "./cron";
@@ -46,6 +47,14 @@ app.onError((err, c) => {
 
 app.route("/api/report", report);
 app.route("/", guide); // exposes GET /api/guide directly, scoped by hostname inside the handler
+
+/**
+ * Called by Xendit's and PayPal's own servers, never by a browser, so this
+ * sits outside every Access-gated group. Each handler verifies the request
+ * actually came from that gateway before doing anything (architecture
+ * "Later": online payments).
+ */
+app.route("/api/webhooks", webhooks);
 
 app.use("/api/studio/*", verifyAccess(), requireStudioOwner());
 app.route("/api/studio", studio);

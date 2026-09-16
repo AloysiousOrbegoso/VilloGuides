@@ -1,0 +1,6 @@
+# Guides themselves already send X-Robots-Tag: noindex (architecture 5.5) and
+# are never listed here; this only ever needs to point at the one page meant
+# to be publicly indexed.
+User-agent: *
+Allow: /
+Sitemap: https://villoguides.com/sitemap.xml

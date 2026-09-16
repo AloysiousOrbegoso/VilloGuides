@@ -1,12 +1,14 @@
 import { Hono } from "hono";
 import type { Bindings, Variables } from "../types";
-import { getGuide, listGuides } from "../models/guides";
+import { ApiError, one } from "../db";
+import { getGuide, listGuides, createGuide, markPaid } from "../models/guides";
 import * as notes from "../models/notes";
 import * as changeRequests from "../models/changeRequests";
 import { isDashboardEligible } from "../models/clients";
 import { requireClientRole } from "../middleware/resolveClient";
 import { buildClientExport } from "../services/clientExport";
-import { one } from "../db";
+import { createInvoice } from "../services/xendit";
+import { createOrder, captureOrder } from "../services/paypal";
 
 /**
  * {client}.villoguides.com/api/dashboard/* (architecture 9.2). Mounted behind
@@ -103,4 +105,86 @@ dashboard.get("/export", requireClientRole("admin"), async (c) => {
       "Content-Disposition": `attachment; filename="${client?.subdomain ?? "export"}-guides.zip"`,
     },
   });
+});
+
+/*
+  Online payments ("Later" list). Architecture 5.3's "Request a new
+  property (shows the payment 'coming soon' page in v1)" is the one spot
+  this was always meant to slot into. A draft guide is created up front so
+  both gateways have something to reference; it only ever gets marked paid
+  once the gateway itself confirms the money actually moved, never from
+  anything the browser alone claims.
+*/
+
+const GUIDE_PRICE_PHP = 850; // architecture 2: $15, approx. ₱850
+const GUIDE_PRICE_USD = "15.00";
+
+dashboard.post("/new-property/checkout", async (c) => {
+  const { provider, propertyName, city } = await c.req.json<{ provider: "xendit" | "paypal"; propertyName: string; city?: string }>();
+  if (!propertyName?.trim()) throw new ApiError("Add the property name.");
+
+  const clientId = c.get("clientId");
+  const guide = await createGuide(c.env, { clientId, propertyName, city, ownerName: c.get("identity").email });
+
+  // Same-origin as this very request, so this works correctly on the real
+  // subdomain in production without hardcoding it, and would also work
+  // through a tunnel in local testing (Xendit and PayPal both need a
+  // publicly reachable HTTPS URL to redirect back to; plain localhost is
+  // not reachable from either gateway's own servers).
+  const origin = new URL(c.req.url).origin;
+  const complete = (extra = "") => `${origin}/requests/new-property/complete?provider=${provider}&guide=${guide.id}${extra}`;
+
+  if (provider === "xendit") {
+    const invoice = await createInvoice(c.env, {
+      externalId: guide.id,
+      amount: GUIDE_PRICE_PHP,
+      description: `Villo Guides: ${propertyName}`,
+      successRedirectUrl: complete(),
+      failureRedirectUrl: complete("&failed=1"),
+    });
+    return c.json({ redirectUrl: invoice.invoice_url });
+  }
+
+  if (provider === "paypal") {
+    const order = await createOrder(c.env, {
+      referenceId: guide.id,
+      amountUsd: GUIDE_PRICE_USD,
+      description: `Villo Guides: ${propertyName}`,
+      returnUrl: complete(),
+      cancelUrl: complete("&failed=1"),
+    });
+    return c.json({ redirectUrl: order.approveUrl });
+  }
+
+  throw new ApiError("Unknown payment method.");
+});
+
+/** Polled by the "complete" page while waiting for Xendit's webhook, which can lag the redirect by a few seconds. */
+dashboard.get("/new-property/status/:guideId", async (c) => {
+  const g = await getGuide(c.env, c.req.param("guideId"));
+  if (g.client_id !== c.get("clientId")) return c.json({ error: "Not found." }, 404);
+  return c.json({ paid: g.paid === 1, status: g.status, property_name: g.property_name });
+});
+
+/**
+ * PayPal's flow authorizes on approval and only actually moves money once
+ * captured, so the "complete" page calls this itself rather than waiting on
+ * a webhook. Safe to call more than once: already-paid short-circuits.
+ */
+dashboard.post("/new-property/paypal/capture", async (c) => {
+  const { guideId, orderId } = await c.req.json<{ guideId: string; orderId: string }>();
+  const g = await getGuide(c.env, guideId);
+  if (g.client_id !== c.get("clientId")) return c.json({ error: "Not found." }, 404);
+  if (g.paid === 1) return c.json({ paid: true });
+
+  const captured = await captureOrder(c.env, orderId);
+  if (captured.referenceId !== guideId) throw new ApiError("Payment reference did not match.", 400);
+
+  await markPaid(c.env, guideId, {
+    method: "PayPal",
+    amount: Math.round(parseFloat(captured.amountUsd ?? GUIDE_PRICE_USD) * 100),
+    currency: "USD",
+    reference: captured.id,
+  });
+  return c.json({ paid: true });
 });

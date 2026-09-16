@@ -1,0 +1,70 @@
+name: CI
+
+# Runs on every pull request and every push to a branch other than main, so
+# problems surface before they ever reach the deploy workflow. This would
+# have caught the missing hono/zod installs before a real deploy attempt.
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      # wrangler.toml's [assets] block points at ../frontend/dist, so the
+      # frontend has to exist before the Worker can even be bundled for
+      # validation, let alone deployed for real (architecture 6.3).
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Type-check
+        working-directory: backend
+        run: npm run typecheck
+
+      # Bundles the Worker exactly like a real deploy would, without
+      # publishing anything. Catches missing dependencies, bad imports, and
+      # config mistakes on every PR instead of on the live site.
+      - name: Validate the Worker bundle
+        working-directory: backend
+        run: npx wrangler deploy --dry-run
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

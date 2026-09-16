@@ -467,9 +467,9 @@ export const mockApi = {
     return wait({ ok: true });
   },
 
-  /** Editor photo upload. Live: presigned R2 URL. Mock: a compressed data URL. */
+  /** Editor photo upload. Live: presigned R2 URL. Mock: a short-lived blob: URL, see compressToObjectUrl. */
   async uploadImage(file) {
-    return wait({ url: await compressToDataUrl(file) });
+    return wait({ url: await compressToObjectUrl(file) });
   },
 
   /* ---------------- Client dashboard ---------------- */
@@ -613,7 +613,7 @@ export const mockApi = {
   async uploadIntakePhoto(tok, file) {
     const l = db.intake_links.find((x) => x.token === tok);
     if (!l) return fail("This link has expired.", 410);
-    return wait({ url: await compressToDataUrl(file) });
+    return wait({ url: await compressToObjectUrl(file) });
   },
 
   async submitIntake(tok, answers) {
@@ -679,12 +679,24 @@ export async function compressImage(file) {
   return out;
 }
 
-async function compressToDataUrl(file) {
+/**
+ * The real backend only ever stores a short filename reference in a guide's
+ * content (architecture 8.2's 100 KB limit is on that text, never on photo
+ * bytes); the actual image lives separately in R2. The mock has no R2, so
+ * it used to embed the entire compressed photo as base64 text directly into
+ * the content object, which meant a single photo alone could exceed the
+ * 100 KB check that was only ever meant to apply to the words of a guide.
+ *
+ * A blob: URL fixes this correctly rather than working around the symptom:
+ * it is short (well under any text limit) and, unlike a data: URL, is a
+ * real renderable image reference the browser resolves from memory, not a
+ * giant string sitting in the JSON itself. The one honest tradeoff: a
+ * blob: URL only lives for the current browser session, so a mock-mode
+ * photo does not survive a hard page refresh. That is a real limitation,
+ * but specific to this local testing convenience; the deployed backend has
+ * no such limitation, since it stores actual files in R2, not object URLs.
+ */
+async function compressToObjectUrl(file) {
   const out = await compressImage(file);
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = () => reject(new Error("Could not read the photo."));
-    r.readAsDataURL(out);
-  });
+  return URL.createObjectURL(out);
 }

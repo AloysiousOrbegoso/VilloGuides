@@ -28,9 +28,6 @@ export function BrandMark({ size = 26, tile = false, tileColor = "var(--navy)", 
     <img
       src="/favicon.svg"
       alt=""
-      width={tile ? Math.round(size * 0.6) : size}
-      height={tile ? Math.round(size * 0.6) : size}
-      style={{ display: "block", objectFit: "contain" }}
     />
   );
   if (!tile) return <span className={`inline-flex ${className}`}>{glyph}</span>;

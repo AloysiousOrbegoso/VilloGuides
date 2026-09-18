@@ -47,7 +47,7 @@ VilloGuides builds branded, mobile-friendly digital guidebooks for rental proper
 | Guide per property | $15 USD (approx. ₱850), one-time | Covers build, review, publishing, unlimited updates, and hosting for as long as the service runs |
 | Client dashboard, 2 or more properties | Included | Created automatically once a client has 2 paid guides |
 | Client dashboard, single property | $5 USD one-time add-on | Optional. Without it, a single-property owner receives links and QR codes only |
-| White-label custom domain | Paid add-on, price to be decided | See §11.3 |
+| White-label custom domain | Paid add-on, $10 USD one-time | See §11.3 |
 
 **Who pays:** a company or an individual owner. Both are "clients" in the system.
 
@@ -712,6 +712,7 @@ Every client gets a free subdomain on `villoguides.com`. Clients who want their 
 - Covers guides, the dashboard, or both, decided per client.
 - Cost to you: 100 custom hostnames free, then $0.10 per hostname per month (verify current pricing).
 - Extra work per client: DNS setup, verification, and troubleshooting. Price the add-on to cover that time.
+- Price: $10 USD, one-time.
 - If the add-on lapses, guides fall back to `{property}.villoguides.com` with redirects.
 
 ---
@@ -984,7 +985,7 @@ Frontend first, so there is something to see before any backend exists.
 | Final logo files | Pending; placeholders in use |
 | Studio editor, intake form, and brand page visual designs | To design; review queue, dashboard directory, and sign-in already designed |
 | Kitchen section icon | To choose |
-| White-label add-on price | To decide |
+| White-label add-on price | Decided: $10 USD, one-time (see §11.3) |
 | Refund policy wording | To decide; needed for terms |
 | Privacy policy and terms | To draft; legal review recommended |
 | Email provider for notifications | Optional at launch; see 6.4 |

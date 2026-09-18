@@ -14,7 +14,7 @@ hostname covering every property the client ever publishes, the same way
 a guide's slug is already just the label in front of `villoguides.com`.
 Dashboard scope is the **bare domain**, an exact match. "Both" registers
 both, separately, since Cloudflare matches a custom hostname exactly (no
-combined apex-plus-wildcard registration) — hence two id columns
+combined apex-plus-wildcard registration), hence two id columns
 (`custom_domain_dashboard_hostname_id`, `custom_domain_guides_hostname_id`)
 on the client row rather than one.
 
@@ -160,9 +160,13 @@ thing.
 
 ## Pricing
 
-Architecture 16 still lists "White-label add-on price" as undecided. The
-studio UI's custom-domain section says so directly ("price still to be
-decided") rather than showing an invented number anywhere.
+Decided at $10 USD, one-time (architecture 11.3 and 16). The studio UI's
+custom-domain section states this directly. No payment tracking is wired
+up for it specifically: like the rest of v1's manual payment collection
+(architecture 2), you collect it yourself and simply proceed to register
+the domain in the studio; there is no separate "mark this add-on as paid"
+step or gate, the same way registering a domain here never checks
+`guides.paid` or `dashboard_addon_paid` either.
 
 ## Files changed
 

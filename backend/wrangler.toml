@@ -61,7 +61,7 @@ run_worker_first = ["/*", "!/assets/*"]
 
 [vars]
 ROOT_DOMAIN = "villoguides.com"
-STUDIO_OWNER_EMAIL = "aloysious121804@gmail.com"
+STUDIO_OWNER_EMAIL = "owner@villoguides.com"
 
 # Online payments (architecture "Later" list). These five are secrets, not
 # plain vars: never put real values in this file. Set each with:

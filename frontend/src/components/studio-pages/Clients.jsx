@@ -230,7 +230,7 @@ function CustomDomainSection({ client, onChanged }) {
     <div className="border-t border-line-soft pt-5">
       <h3 className="text-base font-semibold mt-0 mb-1">White-label custom domain</h3>
       <p className="text-sm text-muted mt-0 mb-4">
-        Optional paid add-on, price still to be decided (architecture 16). The client adds DNS records on their end;
+        Optional paid add-on, $10 USD one-time (architecture 11.3). The client adds DNS records on their end;
         Cloudflare issues and renews the certificate. If the add-on lapses, remove it here: the dashboard and guides
         fall back to {displayHost(client.subdomain)} right away.
       </p>

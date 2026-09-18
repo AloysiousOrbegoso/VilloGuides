@@ -34,25 +34,42 @@ const PRIVACY = [
 ];
 
 const TERMS = [
-  ["The service", "VilloGuides builds and hosts digital guidebooks for rental properties. Each guide has its own web address and is shared by link or QR code."],
+  [
+    "Agreement to these terms",
+    "By sending us an intake form, paying for a guide, or using a client dashboard, you agree to these terms. If you are agreeing on behalf of a company, you confirm you have the authority to do so.",
+  ],
+  ["The service", "VilloGuides builds and hosts digital guidebooks for rental properties. Each guide has its own web address and is shared by link or QR code. Clients with two or more paid guides, or who have paid the single-property add-on, also get a dashboard to manage their guides."],
   [
     "Your content",
-    "You keep ownership of everything you send us. You confirm you have the right to share the details and photos you provide, including photos of people. You give us permission to publish them as part of your guide.",
+    "You keep ownership of everything you send us. You confirm you have the right to share the details and photos you provide, including photos of people, and that doing so does not break the law or infringe anyone else's rights. You give us permission to publish your content as part of your guide and to use it to operate the service, for example by showing it to you in the intake form and studio while your guide is being built.",
   ],
   [
     "What you may not publish",
-    "No unlawful, misleading, or offensive content. No security codes for a property. No personal information about other people without their permission.",
+    "No unlawful, misleading, or offensive content. No security codes for a property outside the dedicated private, PIN-protected block built for that purpose. No personal information about other people without their permission.",
+  ],
+  [
+    "Third-party links and embeds",
+    "A guide may link to Google Maps or embed a YouTube or Vimeo video you provide. Those services are run by their own companies under their own terms, and we are not responsible for their content or availability.",
   ],
   [
     "Payment",
-    "Guides are a one-time fee per property. Payment is arranged directly with us and confirmed before publishing. Hosting is included for as long as the service runs.",
+    "Guides are a one-time fee per property. Add-ons, such as a single-property dashboard or a white-label custom domain, are also one-time fees. Payment is arranged directly with us and confirmed before publishing or activating an add-on. Hosting is included for as long as the service runs.",
   ],
   [
     "Changes and removal",
-    "You can ask for updates at any time. To take a guide down, send a removal request from your dashboard or email us. We may suspend a guide that breaks these terms or is reported for good reason.",
+    "You can ask for updates at any time. To take a guide down, send a removal request from your dashboard or email us. We may suspend a guide that breaks these terms or is reported for good reason, and we will try to tell you why.",
   ],
-  ["Availability", "We aim to keep guides online continuously but do not guarantee uninterrupted service."],
+  ["Availability", "We aim to keep guides online continuously but do not guarantee uninterrupted service, and are not liable for losses caused by downtime outside our reasonable control."],
   ["Refunds", "The refund policy is still being finalised and will be published here before launch."],
+  [
+    "Our liability",
+    "The service is provided as described here, without further guarantees. To the extent the law allows, we are not liable for indirect losses, and our total liability to you is limited to the amount you paid us for the guide or add-on the claim relates to.",
+  ],
+  [
+    "Changes to these terms",
+    "We may update these terms as the service changes. We will change the date at the top of this page when we do, and continued use of the service after a change means you accept the update.",
+  ],
+  ["Governing law", "These terms are governed by the laws of the Republic of the Philippines, where the service is operated."],
 ];
 
 function LegalPage({ title, updated, intro, sections }) {

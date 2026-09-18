@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import { useForcedLight } from "../../lib/theme";
 import Landing from "./Landing";
 import { Privacy, Terms } from "./Legal";
+import FAQ from "./FAQ";
 import ReportGuide from "./ReportGuide";
 import ComingSoon from "./ComingSoon";
 
@@ -14,6 +15,7 @@ export default function BrandApp() {
         <Route index element={<Landing />} />
         <Route path="privacy" element={<Privacy />} />
         <Route path="terms" element={<Terms />} />
+        <Route path="faq" element={<FAQ />} />
         <Route path="report" element={<ReportGuide />} />
         <Route path="*" element={<ComingSoon variant="notfound" title="This page doesn't exist." body="Check the link you followed. If you were looking for a guide, its address ends in villoguides.com." />} />
       </Routes>

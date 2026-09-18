@@ -27,6 +27,9 @@ export function BrandHeader() {
         <a href="#pricing" className="text-charcoal/80 no-underline hover:text-charcoal">
           Pricing
         </a>
+        <Link to="/faq" className="text-charcoal/80 no-underline hover:text-charcoal">
+          FAQ
+        </Link>
         <a href={demoUrl()} className="text-charcoal/80 no-underline hover:text-charcoal">
           Sample guide
         </a>
@@ -268,7 +271,10 @@ export function BrandFooter() {
   return (
     <footer className="bg-charcoal text-offwhite">
       <div className="max-w-[1120px] mx-auto px-5 sm:px-10 py-7 flex items-center justify-between gap-6 flex-wrap text-sm">
-        <nav className="flex gap-7">
+        <nav className="flex gap-7 flex-wrap">
+          <Link to="/faq" className="text-offwhite/80 no-underline hover:text-offwhite">
+            FAQ
+          </Link>
           <Link to="/privacy" className="text-offwhite/80 no-underline hover:text-offwhite">
             Privacy policy
           </Link>

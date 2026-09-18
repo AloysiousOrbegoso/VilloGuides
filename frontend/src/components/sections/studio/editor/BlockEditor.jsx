@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { blockMeta, parseVideo } from "../../../../lib/guideSchema";
 import { looksLikeCode, stripCodes } from "../../../../lib/sensitive";
+import { copyText } from "../../../../lib/clipboard";
 import { IconButton } from "../../../ui/Button";
 import { Checkbox, Field, Input, Select, SensitiveWarning, Textarea } from "../../../ui/Field";
 import { Icon } from "../../../ui/icons";
@@ -12,7 +13,7 @@ import { ImageField } from "./ImageField";
   type label and tools on top, an inline heading where the type has one, then fields.
 */
 
-const HAS_HEADING = ["text", "steps", "list", "contact"];
+const HAS_HEADING = ["text", "steps", "list", "contact", "private"];
 
 export function BlockEditor({ block, onChange, onMove, onDuplicate, onRemove, isFirst, isLast }) {
   const meta = blockMeta(block.type);
@@ -250,6 +251,9 @@ function BlockFields({ block, set }) {
         </div>
       );
 
+    case "private":
+      return <PrivateFields block={block} set={set} />;
+
     default:
       return <p className="text-muted m-0">This block type can't be edited here.</p>;
   }
@@ -278,6 +282,47 @@ function VideoFields({ block, set }) {
       </Field>
       <Field label="Title" className="col-span-2" hint="Describes the video for screen readers">
         <Input value={block.title} onChange={(e) => set({ title: e.target.value })} />
+      </Field>
+    </div>
+  );
+}
+
+/**
+ * The one place a door or lockbox code is meant to go, so unlike text/steps/
+ * list this deliberately has no CodeCheck warning on the body field.
+ */
+function PrivateFields({ block, set }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyPin() {
+    const ok = await copyText(block.pin || "");
+    if (!ok) return;
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Field label="Content" hint="Shown only after a guest enters the correct PIN. Door and lockbox codes belong here.">
+        <Textarea
+          value={block.body}
+          onChange={(e) => set({ body: e.target.value })}
+          minRows={2}
+          placeholder="The lockbox code, gate code, or other sensitive detail"
+          aria-label="Private content"
+        />
+      </Field>
+      <Field label="PIN" hint="Share this with the guest yourself, by text or email, separately from the guide link. At least 4 characters.">
+        <div className="flex gap-2">
+          <Input
+            value={block.pin ?? ""}
+            onChange={(e) => set({ pin: e.target.value })}
+            spellCheck={false}
+            aria-label="PIN"
+            className="flex-1"
+          />
+          <IconButton icon={copied ? "check" : "copy"} label="Copy PIN" onClick={copyPin} disabled={!block.pin} />
+        </div>
       </Field>
     </div>
   );

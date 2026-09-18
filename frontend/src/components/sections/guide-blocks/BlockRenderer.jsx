@@ -7,6 +7,7 @@ import { WifiBlock } from "./WifiBlock";
 import { ContactBlock } from "./ContactBlock";
 import { MapLinkBlock } from "./MapLinkBlock";
 import { ListBlock } from "./ListBlock";
+import { PrivateBlock } from "./PrivateBlock";
 export function BlockRenderer({ block }) {
   switch (block.type) {
     case "text":
@@ -27,5 +28,7 @@ export function BlockRenderer({ block }) {
       return <MapLinkBlock {...block} />;
     case "list":
       return <ListBlock {...block} />;
+    case "private":
+      return <PrivateBlock {...block} />;
   }
 }

@@ -277,6 +277,31 @@
 .guide .block-wifi__note { font-size: 0.9375rem; color: var(--muted); }
 .guide .wifi-error { font-size: 0.9375rem; color: var(--urgent); }
 
+/* Private, PIN-protected note */
+.guide .block-private {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 18px;
+}
+.guide .block-private__row { display: flex; align-items: center; gap: 10px; }
+.guide .block-private__lock { font-size: 1.375rem; color: var(--muted); flex: none; }
+.guide .block-private__pin {
+  flex: 1;
+  min-width: 0;
+  height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-row);
+  background: var(--surface-sunk);
+  font: inherit;
+  font-size: 1.125rem;
+  letter-spacing: 0.05em;
+  color: var(--heading);
+}
+.guide .block-private__pin:focus { outline: none; border-color: var(--accent); }
+.guide .block-private__error { margin-top: 10px; font-size: 0.9375rem; color: var(--urgent); }
+
 /* Image and video */
 .guide .block-image img { width: 100%; border-radius: var(--radius-tile); }
 .guide .block-image figcaption { font-size: 0.875rem; color: var(--muted); margin-top: 8px; }

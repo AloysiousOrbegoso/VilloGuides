@@ -94,6 +94,9 @@ const liveApi = {
   listClients: () => get(`${S}/clients`),
   createClient: (b) => post(`${S}/clients`, b),
   updateClient: (id, b) => put(`${S}/clients/${id}`, b),
+  setClientCustomDomain: (id, b) => post(`${S}/clients/${id}/custom-domain`, b),
+  getClientCustomDomainStatus: (id) => get(`${S}/clients/${id}/custom-domain/status`),
+  removeClientCustomDomain: (id) => request("DELETE", `${S}/clients/${id}/custom-domain`),
   addClientUser: (id, b) => post(`${S}/clients/${id}/users`, b),
   updateClientUser: (uid, b) => put(`${S}/client-users/${uid}`, b),
   removeClientUser: (uid) => request("DELETE", `${S}/client-users/${uid}`),
@@ -139,6 +142,7 @@ const liveApi = {
     }
   },
   reportGuide: (b) => post(`/api/report`, b),
+  unlockPrivateBlock: (blockId, pin) => post(`/api/guide/unlock`, { blockId, pin }),
 };
 
 export const api = MODE === "live" ? liveApi : mockApi;

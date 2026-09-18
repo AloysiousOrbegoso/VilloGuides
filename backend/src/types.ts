@@ -25,6 +25,15 @@ export type Bindings = {
   RL_REPORT: RateLimit;
 
   /**
+   * The private-block unlock endpoint (architecture 12's planned PIN
+   * protection for door codes). Its own budget, tighter than either of the
+   * two above: a 4 to 6 digit PIN is brute-forceable, and RL_STANDARD's 30
+   * requests per 10 seconds would let every 4-digit PIN (10,000
+   * possibilities) be exhausted in under an hour.
+   */
+  RL_UNLOCK: RateLimit;
+
+  /**
    * Email (architecture 6.2, 6.4). Kept on its own address,
    * notifications@villoguides.com, never hello@, so a deliverability
    * problem here never affects mail people actually wrote to reach a
@@ -68,6 +77,18 @@ export type Bindings = {
    */
   CF_ACCOUNT_ID?: string;
   CF_API_TOKEN?: string;
+
+  /**
+   * White-label custom domains (architecture 11.3, services/cloudflareSaas.ts).
+   * Custom hostnames are a zone-scoped resource (/zones/{zone_id}/custom_hostnames),
+   * not account-scoped like the Access automation above, so this is the
+   * villoguides.com zone's id, not CF_ACCOUNT_ID. CF_API_TOKEN is shared with
+   * the Access automation above if that same token also has Zone > SSL and
+   * Certificates > Edit; otherwise use a separate token. Optional: unset
+   * means every function in cloudflareSaas.ts is a no-op, same pattern as
+   * CF_ACCOUNT_ID/CF_API_TOKEN above.
+   */
+  CF_ZONE_ID?: string;
 };
 
 /** What verifyAccess attaches to the request context after checking the JWT. */

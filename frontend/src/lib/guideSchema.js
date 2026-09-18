@@ -52,6 +52,7 @@ export const BLOCK_TYPES = [
   { type: "wifi", label: "Wi-Fi", icon: "wifi" },
   { type: "contact", label: "Contact", icon: "address-book" },
   { type: "map-link", label: "Map link", icon: "map-2" },
+  { type: "private", label: "Private note", icon: "lock" },
 ];
 
 export const blockMeta = (type) => BLOCK_TYPES.find((b) => b.type === type) ?? BLOCK_TYPES[0];
@@ -72,6 +73,10 @@ export function newBlock(type) {
     case "wifi": return { type, network: "", password: "", note: "" };
     case "contact": return { type, heading: "", methods: [{ kind: "call", label: "", value: "", detail: "" }] };
     case "map-link": return { type, label: "", query: "", note: "" };
+    // Unlike every other block type, this needs a stable identity beyond its
+    // position in the array, so the unlock API can address this exact block
+    // within a guide's content.
+    case "private": return { type, id: uid("priv-"), heading: "", body: "", pin: "" };
     default: return { type: "text", heading: "", body: "" };
   }
 }
@@ -119,6 +124,12 @@ export function isBlockEmpty(b) {
     case "wifi": return !filled(b.network) && !filled(b.password);
     case "contact": return !(b.methods ?? []).some((m) => filled(m.value));
     case "map-link": return !filled(b.query);
+    // A published guide never carries body or pin (see redactPrivateBlocks
+    // on the backend): the locked shape guests actually see has neither
+    // field at all. Treating that as "empty" would hide the locked block
+    // from the guest entirely, so only the editor's own draft shape (which
+    // always has both fields) is judged by whether they're filled in.
+    case "private": return !b.locked && (!filled(b.body) || !filled(b.pin));
     default: return true;
   }
 }
@@ -161,6 +172,10 @@ function blockTexts(b) {
     case "image": return [b.caption];
     case "link": return [b.description];
     case "map-link": return [b.note];
+    // Deliberately excluded, not merely unhandled: a private block is the
+    // sanctioned place for a door or lockbox code, so it must never trigger
+    // the warning that exists to keep codes out of every other block.
+    case "private": return [];
     default: return [];
   }
 }
@@ -187,6 +202,7 @@ export function validateGuide(content) {
     for (const b of p.blocks) {
       if (b.type === "link" && filled(b.href) && !isHttp(b.href)) errors.push(`${p.title}: links must start with http or https.`);
       if (b.type === "video" && filled(b.videoId) && !/^[\w-]{5,20}$/.test(b.videoId)) errors.push(`${p.title}: the video ID looks wrong.`);
+      if (b.type === "private" && filled(b.body) && (!filled(b.pin) || b.pin.trim().length < 4)) errors.push(`${p.title}: set a PIN of at least 4 characters for the private block.`);
     }
   }
   for (const pl of c.places) {

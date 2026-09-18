@@ -58,14 +58,39 @@ export async function checkAvailable(
   return { available: true, reason: null };
 }
 
-/** What a hostname resolves to at the edge (architecture 4.1), for the public router. */
-export async function resolveHostname(db: D1Database, sub: string): Promise<{ kind: "client" | "guide" | "none" }> {
-  const client = await one(db, `SELECT id FROM clients WHERE subdomain = ?`, sub);
-  if (client) return { kind: "client" };
-  const guide = await one(db, `SELECT id FROM guides WHERE slug = ?`, sub);
-  if (guide) return { kind: "guide" };
+/**
+ * What a hostname resolves to at the edge (architecture 4.1), for the public
+ * router. Takes the full inbound hostname, not a pre-split label: the normal
+ * *.villoguides.com checks below only ever need its first label (`sub`), but
+ * a white-label custom domain (architecture 11.3) can only ever match by its
+ * full hostname, since it never carries "villoguides.com" as a suffix.
+ *
+ * A guide's own custom-domain routing needs no extra handling here at all:
+ * guides scope is always a wildcard (`*.{custom_domain}`), so `sub` (the
+ * label in front of whatever domain the request actually arrived on) is
+ * already the guide's slug, exactly like {slug}.villoguides.com, and the
+ * ordinary guide check below already finds it. Only a client's dashboard on
+ * a *bare* custom domain needs the extra check at the end, since there `sub`
+ * is just the domain's own first label, not anything meaningful to look up.
+ */
+export async function resolveHostname(db: D1Database, hostname: string): Promise<{ kind: "client" | "guide" | "none"; subdomain?: string; slug?: string }> {
+  const sub = hostname.split(".")[0];
+  const client = await one<{ subdomain: string }>(db, `SELECT subdomain FROM clients WHERE subdomain = ?`, sub);
+  if (client) return { kind: "client", subdomain: client.subdomain };
+  const guide = await one<{ slug: string }>(db, `SELECT slug FROM guides WHERE slug = ?`, sub);
+  if (guide) return { kind: "guide", slug: guide.slug };
   const retired = await one(db, `SELECT guide_id FROM slug_history WHERE slug = ? AND retired_at IS NOT NULL`, sub);
-  if (retired) return { kind: "guide" };
+  if (retired) return { kind: "guide", slug: sub };
+
+  const customClient = await one<{ subdomain: string; custom_domain_scope: string | null }>(
+    db,
+    `SELECT subdomain, custom_domain_scope FROM clients WHERE custom_domain = ?`,
+    hostname,
+  );
+  if (customClient && (customClient.custom_domain_scope === "dashboard" || customClient.custom_domain_scope === "both")) {
+    return { kind: "client", subdomain: customClient.subdomain };
+  }
+
   return { kind: "none" };
 }
 

@@ -3,6 +3,7 @@ import { ApiError, one, run } from "../db";
 import type { Bindings, Variables } from "../types";
 import * as clients from "../models/clients";
 import * as clientUsers from "../models/clientUsers";
+import * as customDomains from "../models/customDomains";
 import * as guides from "../models/guides";
 import * as intakeLinks from "../models/intakeLinks";
 import * as changeRequests from "../models/changeRequests";
@@ -118,6 +119,13 @@ studio.delete("/client-users/:userId", async (c) => {
   await clientUsers.removeClientUser(c.env, c.req.param("userId"));
   return c.json({ ok: true });
 });
+
+studio.post("/clients/:id/custom-domain", async (c) => {
+  const body = await c.req.json<{ domain: string; scope: "dashboard" | "guides" | "both" }>();
+  return c.json(await customDomains.setCustomDomain(c.env, c.req.param("id"), body));
+});
+studio.get("/clients/:id/custom-domain/status", async (c) => c.json(await customDomains.getCustomDomainStatus(c.env, c.req.param("id"))));
+studio.delete("/clients/:id/custom-domain", async (c) => c.json(await customDomains.removeCustomDomain(c.env, c.req.param("id"))));
 
 studio.get("/change-requests", async (c) => c.json(await changeRequests.listAllChangeRequests(c.env)));
 

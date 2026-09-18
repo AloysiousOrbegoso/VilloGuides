@@ -43,6 +43,7 @@ export function validateGuide(content: GuideContent) {
     for (const b of p.blocks ?? []) {
       if (b.type === "link" && filled(b.href) && !isHttp(b.href)) errors.push(`${p.title}: links must start with http or https.`);
       if (b.type === "video" && filled(b.videoId) && !/^[\w-]{5,20}$/.test(b.videoId)) errors.push(`${p.title}: the video ID looks wrong.`);
+      if (b.type === "private" && filled(b.body) && (!filled(b.pin) || String(b.pin).trim().length < 4)) errors.push(`${p.title}: set a PIN of at least 4 characters for the private block.`);
     }
   }
   for (const pl of c.places ?? []) {

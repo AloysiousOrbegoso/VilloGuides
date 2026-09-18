@@ -24,10 +24,15 @@ export default function App() {
   const [loc] = useState(() => resolveLocation());
   const [tenant, setTenant] = useState(null);
 
-  // A bare subdomain in production is either a client dashboard or a guide (architecture 4.1).
+  // A bare subdomain in production is either a client dashboard or a guide
+  // (architecture 4.1); a white-label custom domain (architecture 11.3) is
+  // the same ambiguity, just resolved from the real Host header instead of
+  // an explicit sub, since liveApi.resolveHost ignores its argument and
+  // always asks the Worker to resolve whatever hostname the request
+  // actually arrived on.
   useEffect(() => {
-    if (loc.area !== "tenant") return;
-    api.resolveHost(loc.sub).then((r) => setTenant(r.kind), () => setTenant("none"));
+    if (loc.area !== "tenant" && loc.area !== "custom") return;
+    api.resolveHost(loc.sub).then((r) => setTenant(r), () => setTenant({ kind: "none" }));
   }, [loc]);
 
   useEffect(() => {
@@ -40,17 +45,20 @@ export default function App() {
   // Computed before any early return, so every hook below always runs in the
   // same order regardless of how far tenant resolution has gotten. "none"
   // covers both "still waiting on resolveHost" and "resolved, no such
-  // tenant"; the two are told apart just below, after the hooks.
+  // tenant"; the two are told apart just below, after the hooks. tenant.sub
+  // and tenant.slug are only ever present for a custom domain (the Worker
+  // resolved them from the real Host header); for an ordinary *.villoguides.com
+  // subdomain, loc.sub already is the right value.
   let area = loc.area;
   let client = loc.client;
   let slug = loc.slug;
-  if (area === "tenant") {
-    if (tenant === "client") {
+  if (area === "tenant" || area === "custom") {
+    if (tenant?.kind === "client") {
       area = "dashboard";
-      client = loc.sub;
-    } else if (tenant === "guide") {
+      client = tenant.subdomain || loc.sub;
+    } else if (tenant?.kind === "guide") {
       area = "guide";
-      slug = loc.sub;
+      slug = tenant.slug || loc.sub;
     } else {
       area = "none";
     }
@@ -60,7 +68,7 @@ export default function App() {
     registerServiceWorkerIfGuide(area);
   }, [area]);
 
-  if (loc.area === "tenant" && !tenant) return <Loading full />;
+  if ((loc.area === "tenant" || loc.area === "custom") && !tenant) return <Loading full />;
   if (area === "none") return <ComingSoon variant="notfound" />;
 
   return (

@@ -149,6 +149,160 @@ function NewClientDialog({ open, onClose, onCreated }) {
   );
 }
 
+/**
+ * Architecture 11.3: a client's own domain, covering their dashboard, their
+ * guides, or both. Registering and removing call Cloudflare directly
+ * (services/cloudflareSaas.ts), so this acts immediately rather than
+ * batching into the drawer's own "Save changes" button.
+ */
+function CustomDomainSection({ client, onChanged }) {
+  const [domain, setDomain] = useState(client.custom_domain || "");
+  const [scope, setScope] = useState(client.custom_domain_scope || "guides");
+  const [status, setStatus] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState("");
+  const toast = useToast();
+
+  // Keyed on client.id alone, deliberately: the drawer reloads the client
+  // list (and hands this a new client object) right after register/remove
+  // below, and resetting on every custom_domain change would wipe the
+  // status this component just set from that very same action's result.
+  // This should only reset when the drawer switches to a different client.
+  useEffect(() => {
+    setDomain(client.custom_domain || "");
+    setScope(client.custom_domain_scope || "guides");
+    setStatus(null);
+    setError("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client.id]);
+
+  async function register() {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await api.setClientCustomDomain(client.id, { domain: domain.trim().toLowerCase(), scope });
+      setStatus(result);
+      toast(client.custom_domain ? "Custom domain updated" : "Custom domain registered");
+      onChanged();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function checkStatus() {
+    setChecking(true);
+    setError("");
+    try {
+      setStatus(await api.getClientCustomDomainStatus(client.id));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  async function remove() {
+    if (!window.confirm(`Remove ${client.custom_domain}? The dashboard and guides fall back to ${displayHost(client.subdomain)} right away.`)) return;
+    setBusy(true);
+    setError("");
+    try {
+      await api.removeClientCustomDomain(client.id);
+      setStatus(null);
+      setDomain("");
+      toast("Custom domain removed");
+      onChanged();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const hostnames = [
+    status?.dashboard && { label: "Dashboard", ...status.dashboard },
+    status?.guides && { label: "Guides", ...status.guides },
+  ].filter(Boolean);
+
+  return (
+    <div className="border-t border-line-soft pt-5">
+      <h3 className="text-base font-semibold mt-0 mb-1">White-label custom domain</h3>
+      <p className="text-sm text-muted mt-0 mb-4">
+        Optional paid add-on, price still to be decided (architecture 16). The client adds DNS records on their end;
+        Cloudflare issues and renews the certificate. If the add-on lapses, remove it here: the dashboard and guides
+        fall back to {displayHost(client.subdomain)} right away.
+      </p>
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <Field label="Domain" htmlFor="cd-domain" hint="No https:// and no path, just the domain">
+          <Input id="cd-domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="acme-rentals.com" spellCheck={false} />
+        </Field>
+        <Field label="Covers">
+          <Segmented
+            label="What the custom domain covers"
+            value={scope}
+            onChange={setScope}
+            options={[
+              { value: "dashboard", label: "Dashboard" },
+              { value: "guides", label: "Guides" },
+              { value: "both", label: "Both" },
+            ]}
+          />
+        </Field>
+      </div>
+      <div className="flex flex-wrap gap-2 mb-3">
+        <Button onClick={register} disabled={busy || !domain.trim()}>
+          {client.custom_domain ? "Update domain" : "Register domain"}
+        </Button>
+        {client.custom_domain && (
+          <>
+            <Button variant="ghost" onClick={checkStatus} disabled={checking}>
+              {checking ? "Checking" : "Check status"}
+            </Button>
+            <Button variant="danger" onClick={remove} disabled={busy}>
+              Remove
+            </Button>
+          </>
+        )}
+      </div>
+      {error && <p className="text-accent text-sm m-0 mb-3">{error}</p>}
+      {status && (
+        <div className="flex flex-col gap-3">
+          {status.cnameTarget && (
+            <p className="text-sm text-muted m-0">
+              CNAME target Cloudflare asks for: <code className="text-ink">{status.cnameTarget}</code>
+            </p>
+          )}
+          {hostnames.map((h) => (
+            <div key={h.label} className="border border-line-soft rounded-lg p-3 text-sm flex flex-col gap-1">
+              <p className="font-semibold m-0">
+                {h.label}: {h.status === "active" && h.sslStatus === "active" ? "Active" : "Pending"}
+              </p>
+              {h.hostname && <p className="text-muted m-0">{h.hostname}</p>}
+              {h.ownershipVerification && (
+                <p className="text-muted m-0">
+                  Add a TXT record to prove ownership: <code className="text-ink">{h.ownershipVerification.name}</code> pointing to{" "}
+                  <code className="text-ink">{h.ownershipVerification.value}</code>
+                </p>
+              )}
+              {(h.validationRecords || []).map((r, i) => (
+                <p key={i} className="text-muted m-0">
+                  {r.txt_name
+                    ? <>Add a TXT record to issue the certificate: <code className="text-ink">{r.txt_name}</code> pointing to <code className="text-ink">{r.txt_value}</code></>
+                    : r.http_url
+                      ? `Certificate validation is served automatically once the CNAME points here.`
+                      : null}
+                </p>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ClientDrawer({ client, onClose, onChanged }) {
   const [form, setForm] = useState(null);
   const [sub, setSub] = useState({ value: "", ok: false });
@@ -240,10 +394,17 @@ function ClientDrawer({ client, onClose, onChanged }) {
           <Input id="cd-aud" value={form.access_aud} onChange={(e) => setForm({ ...form, access_aud: e.target.value })} placeholder="Not set" />
         </Field>
         {client.eligible && (
-          <a href={dashboardUrl(client.subdomain)} target="_blank" rel="noreferrer" className="text-link font-semibold text-sm">
+          <a
+            href={client.custom_domain && (client.custom_domain_scope === "dashboard" || client.custom_domain_scope === "both") ? `https://${client.custom_domain}` : dashboardUrl(client.subdomain)}
+            target="_blank"
+            rel="noreferrer"
+            className="text-link font-semibold text-sm"
+          >
             Open this client's dashboard
           </a>
         )}
+
+        <CustomDomainSection client={client} onChanged={onChanged} />
 
         <div className="border-t border-line-soft pt-5">
           <h3 className="text-base font-semibold mt-0 mb-1">Staff who can sign in</h3>

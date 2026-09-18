@@ -53,10 +53,20 @@ export function isSubdomainMode(hostname = window.location.hostname) {
   return hostname === ROOT_DOMAIN || hostname.endsWith(`.${ROOT_DOMAIN}`);
 }
 
+/** Local development only ever happens on one of these; anything else that isn't villoguides.com is a real custom domain. */
+function isLocalDevHost(hostname) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".localhost");
+}
+
 /**
  * Returns { area, basename, client?, slug?, token?, sub? }.
- * area is one of: brand, studio, dashboard, forms, guide, demo, tenant.
- * "tenant" means a subdomain the Worker must resolve into a client or a guide.
+ * area is one of: brand, studio, dashboard, forms, guide, demo, tenant, custom.
+ * "tenant" means a *.villoguides.com subdomain the Worker must resolve into
+ * a client or a guide. "custom" is the same idea for a white-label domain
+ * (architecture 11.3): which client it belongs to, and whether it's their
+ * dashboard or one of their guides, can only be resolved by the Worker,
+ * which knows every client's custom_domain and the real Host header; the
+ * frontend has no way to guess that split from the hostname string alone.
  */
 export function resolveLocation(loc = window.location) {
   const { hostname, pathname } = loc;
@@ -77,6 +87,7 @@ export function resolveLocation(loc = window.location) {
   if (first === "forms") return { area: "forms", basename: "/forms", token: second || "" };
   if (first === "d" && second) return { area: "dashboard", basename: `/d/${second}`, client: second };
   if (first === "g" && second) return { area: "guide", basename: `/g/${second}`, slug: second };
+  if (!isLocalDevHost(hostname)) return { area: "custom", basename: "" };
   return { area: "brand", basename: "" };
 }
 

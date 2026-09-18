@@ -90,8 +90,8 @@ app.get("/photos/:key", async (c) => {
 });
 
 app.get("/api/host", async (c) => {
-  const sub = c.req.header("X-Villo-Dev-Host") || new URL(c.req.url).hostname.split(".")[0];
-  return c.json(await resolveHostname(c.env.DB, sub));
+  const hostname = c.req.header("X-Villo-Dev-Host") || new URL(c.req.url).hostname;
+  return c.json(await resolveHostname(c.env.DB, hostname));
 });
 
 /**
@@ -103,9 +103,9 @@ app.get("/api/host", async (c) => {
  */
 app.get("*", async (c) => {
   const res = await c.env.ASSETS.fetch(c.req.raw);
-  const sub = c.req.header("X-Villo-Dev-Host") || new URL(c.req.url).hostname.split(".")[0];
-  if (sub === "demo") return withGuideCsp(res);
-  const resolved = await resolveHostname(c.env.DB, sub);
+  const hostname = c.req.header("X-Villo-Dev-Host") || new URL(c.req.url).hostname;
+  if (hostname.split(".")[0] === "demo") return withGuideCsp(res);
+  const resolved = await resolveHostname(c.env.DB, hostname);
   return resolved.kind === "guide" ? withGuideCsp(res) : res;
 });
 

@@ -396,6 +396,56 @@ export const mockApi = {
     return wait(c);
   },
 
+  /**
+   * No real Cloudflare gateway to simulate here either (same reasoning as
+   * startPropertyCheckout for the payment gateways): registration succeeds
+   * immediately and status reads back as already active, so the studio UI
+   * itself can be exercised end to end without a live Cloudflare account.
+   */
+  async setClientCustomDomain(cid, { domain, scope }) {
+    const c = clientById(cid);
+    if (!c) return fail("Client not found.", 404);
+    const taken = db.clients.some((x) => x.id !== cid && x.custom_domain === domain);
+    if (taken) return fail("Another client is already using this domain.");
+    if (!domain || !/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(domain)) return fail("Enter a valid domain, like acme-rentals.com.");
+    Object.assign(c, {
+      custom_domain: domain,
+      custom_domain_scope: scope,
+      custom_domain_dashboard_hostname_id: scope !== "guides" ? id("ch") : null,
+      custom_domain_guides_hostname_id: scope !== "dashboard" ? id("ch") : null,
+    });
+    log("client.custom_domain_set", { client_id: cid, detail: { domain, scope } });
+    persist();
+    return wait({
+      domain,
+      scope,
+      dashboard: scope !== "guides" ? { status: "active", sslStatus: "active" } : null,
+      guides: scope !== "dashboard" ? { status: "active", sslStatus: "active" } : null,
+      cnameTarget: "fallback.villoguides.com",
+    });
+  },
+
+  async getClientCustomDomainStatus(cid) {
+    const c = clientById(cid);
+    if (!c || !c.custom_domain) return fail("This client has no custom domain set.");
+    return wait({
+      domain: c.custom_domain,
+      scope: c.custom_domain_scope,
+      dashboard: c.custom_domain_dashboard_hostname_id ? { status: "active", sslStatus: "active" } : null,
+      guides: c.custom_domain_guides_hostname_id ? { status: "active", sslStatus: "active" } : null,
+      cnameTarget: "fallback.villoguides.com",
+    });
+  },
+
+  async removeClientCustomDomain(cid) {
+    const c = clientById(cid);
+    if (!c || !c.custom_domain) return fail("This client has no custom domain set.");
+    Object.assign(c, { custom_domain: null, custom_domain_scope: null, custom_domain_dashboard_hostname_id: null, custom_domain_guides_hostname_id: null });
+    log("client.custom_domain_removed", { client_id: cid });
+    persist();
+    return wait({ ok: true });
+  },
+
   async addClientUser(cid, { email, role }) {
     const e = (email || "").trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return fail("Enter a valid email.");
@@ -635,11 +685,11 @@ export const mockApi = {
 
   /* ---------------- Public ---------------- */
 
-  /** What a hostname resolves to (architecture 4.1). */
+  /** What a hostname resolves to (architecture 4.1). Custom domains (11.3) have no real hostname to resolve locally, so this only covers the ordinary *.villoguides.com case. */
   async resolveHost(sub) {
-    if (db.clients.some((c) => c.subdomain === sub)) return wait({ kind: "client" });
-    if (db.guides.some((g) => g.slug === sub)) return wait({ kind: "guide" });
-    if (db.slug_history.some((s) => s.slug === sub && s.retired_at)) return wait({ kind: "guide" });
+    if (db.clients.some((c) => c.subdomain === sub)) return wait({ kind: "client", subdomain: sub });
+    if (db.guides.some((g) => g.slug === sub)) return wait({ kind: "guide", slug: sub });
+    if (db.slug_history.some((s) => s.slug === sub && s.retired_at)) return wait({ kind: "guide", slug: sub });
     return wait({ kind: "none" });
   },
 
@@ -667,7 +717,35 @@ export const mockApi = {
     persist();
     return wait({ ok: true });
   },
+
+  /**
+   * No real gateway to simulate here, unlike the live Worker this doesn't
+   * scope the search to one hostname-resolved guide first, since the mock
+   * has no hostname concept to resolve against; it just compares the PIN
+   * against whichever published guide actually has a block with this id,
+   * which block ids (timestamped and random) are unique enough for.
+   */
+  async unlockPrivateBlock(blockId, pin) {
+    for (const g of db.guides) {
+      if (g.status !== "published" || !g.published_version) continue;
+      const v = db.guide_versions.find((x) => x.guide_id === g.id && x.version === g.published_version);
+      const block = findPrivateBlock(v?.content, blockId);
+      if (!block) continue;
+      if (block.pin !== pin) return fail("Incorrect PIN.");
+      return wait({ body: block.body });
+    }
+    return fail("Incorrect PIN.");
+  },
 };
+
+function findPrivateBlock(content, blockId) {
+  for (const p of content?.pages ?? []) {
+    for (const b of p.blocks ?? []) {
+      if (b.type === "private" && b.id === blockId) return b;
+    }
+  }
+  return null;
+}
 
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
 

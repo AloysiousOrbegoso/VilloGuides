@@ -11,6 +11,9 @@ export type ClientRow = {
   logo_key: string | null;
   brand_color: string | null;
   custom_domain: string | null;
+  custom_domain_scope: "dashboard" | "guides" | "both" | null;
+  custom_domain_dashboard_hostname_id: string | null;
+  custom_domain_guides_hostname_id: string | null;
   plan: string;
   dashboard_addon_paid: number;
   access_aud: string | null;

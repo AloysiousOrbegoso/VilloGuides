@@ -11,12 +11,24 @@ import type { Bindings, Variables } from "../types";
  */
 export function resolveClient() {
   return async (c: Context<{ Bindings: Bindings; Variables: Variables }>, next: Next) => {
-    const host = c.req.header("X-Villo-Dev-Host") || new URL(c.req.url).hostname.split(".")[0];
-    const client = await one<{ id: string; access_aud: string | null }>(
+    const hostname = c.req.header("X-Villo-Dev-Host") || new URL(c.req.url).hostname;
+    let client = await one<{ id: string; access_aud: string | null }>(
       c.env.DB,
       `SELECT id, access_aud FROM clients WHERE subdomain = ?`,
-      host,
+      hostname.split(".")[0],
     );
+    if (!client) {
+      // White-label custom domain (architecture 11.3): a client's dashboard
+      // on their own domain never matches the subdomain lookup above (its
+      // first label means nothing to us), only an exact match against their
+      // stored custom_domain, and only when its scope actually covers the
+      // dashboard.
+      client = await one<{ id: string; access_aud: string | null }>(
+        c.env.DB,
+        `SELECT id, access_aud FROM clients WHERE custom_domain = ? AND custom_domain_scope IN ('dashboard', 'both')`,
+        hostname,
+      );
+    }
     if (!client) return c.json({ error: "Not found." }, 404);
 
     const identity = c.get("identity");

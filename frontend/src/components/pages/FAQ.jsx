@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CONTACT_EMAIL, demoUrl } from "../../lib/hostname";
+import { CONTACT_EMAIL, contactUrl, demoUrl } from "../../lib/hostname";
 import { Icon } from "../ui/icons";
-import { BrandHeader, BrandFooter } from "../sections/landing/LandingParts";
+import { BrandHeader, BrandFooter, BackLink } from "../sections/landing/LandingParts";
 
 /*
   villoguides.com/faq. Same plain-language, honest tone as Legal.jsx: answers
@@ -132,6 +132,7 @@ export default function FAQ() {
     <>
       <BrandHeader />
       <main className="max-w-[760px] mx-auto px-5 sm:px-10 py-12">
+        <BackLink />
         <h1 className="font-serif font-normal text-4xl text-black m-0 mb-3">Frequently asked questions</h1>
         <p className="text-lg leading-relaxed text-[#3c3c3a] m-0 mb-12 max-w-[52ch]">
           Answers to what people usually ask before getting a guide. Can't find yours? Email us directly.
@@ -148,7 +149,7 @@ export default function FAQ() {
           </section>
         ))}
         <p className="text-muted m-0 mt-4">
-          Still have a question? Email <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-navy">{CONTACT_EMAIL}</a>.
+          Still have a question? Email <a href={contactUrl("Question from the FAQ page")} target="_blank" rel="noopener noreferrer" className="text-brand-navy">{CONTACT_EMAIL}</a>.
         </p>
       </main>
       <BrandFooter />

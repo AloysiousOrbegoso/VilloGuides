@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { CONTACT_EMAIL, brandUrl } from "../../lib/hostname";
+import { contactUrl, brandUrl } from "../../lib/hostname";
 import { applyMode } from "../../lib/theme";
 import { Button } from "../ui/Button";
 import { BrandMark, Wordmark } from "../ui/icons";
@@ -73,7 +73,7 @@ export default function ComingSoon({ variant = "notfound", title, body, showHome
         <h1 className="font-serif font-normal text-4xl sm:text-5xl text-black mt-8 mb-4">{title ?? v.title}</h1>
         <p className="text-lg leading-relaxed text-[#3c3c3a] mb-8 max-w-md">{body ?? v.body}</p>
         <div className="flex items-center gap-6 flex-wrap">
-          <Button variant="primary" size="lg" icon="mail" href={`mailto:${CONTACT_EMAIL}`} className="!bg-maroon !border-maroon !text-[#F4E9E9]">
+          <Button variant="primary" size="lg" icon="mail" href={contactUrl(title ?? v.title)} target="_blank" rel="noopener noreferrer" className="!bg-maroon !border-maroon !text-[#F4E9E9]">
             Contact us
           </Button>
           {showHome && (

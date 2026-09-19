@@ -133,3 +133,16 @@ export function brandUrl(path = "") {
 export function reportUrl(slug) {
   return brandUrl(`/report${slug ? `?guide=${encodeURIComponent(slug)}` : ""}`);
 }
+
+/**
+ * A mailto: link only works if the visitor's browser has a mail client
+ * configured, which desktop Chrome in particular often doesn't - clicking
+ * does nothing, with no error to explain why. Gmail's own compose URL works
+ * in any browser with no such dependency, so every "Contact us" link opens
+ * that instead, pre-addressed to CONTACT_EMAIL (which already forwards to
+ * the inbox that's actually read, per architecture 6.4).
+ */
+export function contactUrl(subject) {
+  const params = new URLSearchParams({ view: "cm", fs: "1", to: CONTACT_EMAIL, su: subject });
+  return `https://mail.google.com/mail/?${params.toString()}`;
+}

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../../lib/api";
-import { CONTACT_EMAIL } from "../../lib/hostname";
+import { CONTACT_EMAIL, contactUrl } from "../../lib/hostname";
 import { Button } from "../ui/Button";
 import { Field, Input, Select, Textarea } from "../ui/Field";
 import { Icon } from "../ui/icons";
-import { BrandHeader, BrandFooter } from "../sections/landing/LandingParts";
+import { BrandHeader, BrandFooter, BackLink } from "../sections/landing/LandingParts";
 
 const REASONS = [
   ["wrong", "Something in it is wrong or out of date"],
@@ -47,6 +47,7 @@ export default function ReportGuide() {
     <>
       <BrandHeader />
       <main className="max-w-[640px] mx-auto px-5 sm:px-10 py-12">
+        <BackLink />
         {sent ? (
           <>
             <Icon name="circle-check" className="text-4xl text-brand-navy" />
@@ -88,7 +89,7 @@ export default function ReportGuide() {
                 </Button>
               </div>
               <p className="text-sm text-muted m-0">
-                Urgent? Email <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-navy">{CONTACT_EMAIL}</a>.
+                Urgent? Email <a href={contactUrl("Urgent: report a guide")} target="_blank" rel="noopener noreferrer" className="text-brand-navy">{CONTACT_EMAIL}</a>.
               </p>
             </div>
           </>

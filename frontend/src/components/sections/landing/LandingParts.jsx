@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
-import { CONTACT_EMAIL, demoUrl } from "../../../lib/hostname";
+import { CONTACT_EMAIL, contactUrl, demoUrl } from "../../../lib/hostname";
 import { KITCHEN_ICON } from "../../../lib/guideSchema";
 import { Button } from "../../ui/Button";
 import { Icon } from "../../ui/icons";
@@ -38,6 +38,16 @@ export function BrandHeader() {
   );
 }
 
+/** Top-of-page link back to the brand site, for every secondary page (Privacy, Terms, FAQ, Report) except the landing page itself. */
+export function BackLink() {
+  return (
+    <Link to="/" className="inline-flex items-center gap-1.5 text-muted no-underline hover:text-charcoal mb-8">
+      <Icon name="arrow-left" />
+      Back to villoguides.com
+    </Link>
+  );
+}
+
 export function Hero() {
   return (
     <section className="max-w-[1120px] mx-auto px-5 sm:px-10">
@@ -52,7 +62,7 @@ export function Hero() {
             <Button variant="primary" size="lg" icon="device-mobile" href={demoUrl()} className="!bg-maroon !border-maroon !text-[#F4E9E9]">
               Open the sample guide
             </Button>
-            <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold text-charcoal underline underline-offset-4">
+            <a href={contactUrl("Question from villoguides.com")} target="_blank" rel="noopener noreferrer" className="font-semibold text-charcoal underline underline-offset-4">
               {CONTACT_EMAIL}
             </a>
           </div>
@@ -259,7 +269,7 @@ export function ContactStrip() {
     <div className="max-w-[1120px] mx-auto px-5 sm:px-10">
       <div className="flex items-center justify-between gap-6 flex-wrap mt-24 sm:mt-38 pt-14 pb-24 border-t border-[#dcdcd9]">
         <h2 className="font-serif font-normal text-3xl sm:text-4xl text-black m-0">Want a guide for your place?</h2>
-        <Button variant="primary" size="lg" icon="mail" href={`mailto:${CONTACT_EMAIL}`} className="!bg-maroon !border-maroon !text-[#F4E9E9]">
+        <Button variant="primary" size="lg" icon="mail" href={contactUrl("Want a guide for my place")} target="_blank" rel="noopener noreferrer" className="!bg-maroon !border-maroon !text-[#F4E9E9]">
           Email {CONTACT_EMAIL}
         </Button>
       </div>

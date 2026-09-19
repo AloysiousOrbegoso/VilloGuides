@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { CONTACT_EMAIL } from "../../lib/hostname";
-import { BrandHeader, BrandFooter } from "../sections/landing/LandingParts";
+import { CONTACT_EMAIL, contactUrl } from "../../lib/hostname";
+import { BrandHeader, BrandFooter, BackLink } from "../sections/landing/LandingParts";
 
 /*
   Placeholder legal text. Architecture section 16 lists the privacy policy and terms
@@ -80,6 +80,7 @@ function LegalPage({ title, updated, intro, sections }) {
     <>
       <BrandHeader />
       <main className="max-w-[760px] mx-auto px-5 sm:px-10 py-12">
+        <BackLink />
         <h1 className="font-serif font-normal text-4xl text-black m-0 mb-3">{title}</h1>
         <p className="text-muted m-0 mb-8">Last updated {updated}</p>
         <p className="text-lg leading-relaxed text-[#3c3c3a] m-0 mb-10">{intro}</p>
@@ -90,7 +91,7 @@ function LegalPage({ title, updated, intro, sections }) {
           </section>
         ))}
         <p className="text-muted m-0 mt-12">
-          Questions? Email <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-navy">{CONTACT_EMAIL}</a>.
+          Questions? Email <a href={contactUrl(`Question about ${title}`)} target="_blank" rel="noopener noreferrer" className="text-brand-navy">{CONTACT_EMAIL}</a>.
         </p>
       </main>
       <BrandFooter />

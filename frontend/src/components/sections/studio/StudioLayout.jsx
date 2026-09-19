@@ -21,7 +21,16 @@ export function StudioLayout() {
 
   return (
     <StudioContext.Provider value={{ stats, refreshStats }}>
-      <div className="grid grid-cols-[216px_minmax(0,1fr)] h-screen min-h-[640px]">
+      {/*
+        h-dvh (not h-screen/100vh) so this always matches the real visible
+        viewport, and overflow-hidden so the page itself never scrolls - only
+        the sidebar, editor, and preview panels do, each through their own
+        overflow-auto. The previous min-h-[640px] safety net did the opposite
+        of its intent: on any window shorter than that, it forced the shell
+        taller than the viewport, so the whole page scrolled past every
+        panel's real content into blank space below it.
+      */}
+      <div className="grid grid-cols-[216px_minmax(0,1fr)] h-dvh overflow-hidden">
         <Sidebar stats={stats} />
         <div className="flex flex-col min-w-0 min-h-0">
           <Outlet />

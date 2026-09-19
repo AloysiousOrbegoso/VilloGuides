@@ -8,14 +8,14 @@ This repository follows `VILLOGUIDES_ARCHITECTURE.md`. Section numbers in code c
 
 Phase 1 is complete: the whole frontend runs on mock data held in the browser. `backend/` is empty and is filled in from Phase 2 onward.
 
-| Phase | What | State |
-|---|---|---|
-| 0 | Project setup, fonts, tokens | Done |
-| 1 | Frontend on mock data | Done |
-| 2 | Backend foundation: D1, models, Access | Not started |
-| 3 | Intake and publishing APIs | Not started |
-| 4 | Client dashboards | Not started |
-| 5 | Hardening and launch | Not started |
+| Phase | What                                   | State       |
+| ----- | -------------------------------------- | ----------- |
+| 0     | Project setup, fonts, tokens           | Done        |
+| 1     | Frontend on mock data                  | Done        |
+| 2     | Backend foundation: D1, models, Access | Not started |
+| 3     | Intake and publishing APIs             | Not started |
+| 4     | Client dashboards                      | Not started |
+| 5     | Hardening and launch                   | Not started |
 
 ## Rules for anyone working here
 
@@ -39,15 +39,15 @@ npm run lint
 
 Subdomains are awkward on localhost, so each area also has a path prefix. `src/lib/hostname.js` resolves both.
 
-| Area | Production | Development |
-|---|---|---|
-| Brand page | `villoguides.com` | `/` |
-| Privacy, terms, report | `villoguides.com/privacy` | `/privacy`, `/terms`, `/report` |
-| Studio | `studio.villoguides.com` | `/studio` |
-| Client dashboard | `sunbay.villoguides.com` | `/d/sunbay` |
-| Intake form | `forms.villoguides.com/abc123` | `/forms/abc123` |
-| Guide | `casaluna.villoguides.com` | `/g/casaluna` |
-| Demo | `demo.villoguides.com` | `/demo` |
+| Area                   | Production                     | Development                     |
+| ---------------------- | ------------------------------ | ------------------------------- |
+| Brand page             | `villoguides.com`              | `/`                             |
+| Privacy, terms, report | `villoguides.com/privacy`      | `/privacy`, `/terms`, `/report` |
+| Studio                 | `studio.villoguides.com`       | `/studio`                       |
+| Client dashboard       | `sunbay.villoguides.com`       | `/d/sunbay`                     |
+| Intake form            | `forms.villoguides.com/abc123` | `/forms/abc123`                 |
+| Guide                  | `casaluna.villoguides.com`     | `/g/casaluna`                   |
+| Demo                   | `demo.villoguides.com`         | `/demo`                         |
 
 ## Mock data
 
@@ -105,3 +105,4 @@ Guide styles live in `guide.css` and are all scoped under `.guide`, and guide th
 - There is no sign-in screen. Cloudflare Access guards `studio` and each client hostname, and the Worker verifies the identity.
 - Published guides carry the property's own palette. VilloGuides branding appears only as a small footer credit.
 - See `DESIGN.md` for the tokens, type scale, and the rules behind the interface.
+  -frontend build

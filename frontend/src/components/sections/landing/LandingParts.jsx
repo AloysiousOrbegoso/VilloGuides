@@ -83,8 +83,14 @@ function HeroArt() {
       <div className="bg-white rounded-lg shadow-[0_18px_40px_-24px_rgba(0,0,0,0.45)] px-6 py-7 w-56 translate-x-6 rotate-[-4deg] z-10">
         <p className="font-serif text-xl text-black m-0 mb-1 leading-tight">Welcome to Casa de Vista</p>
         <p className="text-xs text-[#5a5a58] m-0 mb-4 leading-relaxed">Scan for Wi-Fi, check-in, and everything else about the house.</p>
-        <div className="bg-white">
-          <QRCodeCanvas value="https://demo.villoguides.com" size={150} level="M" marginSize={0} />
+         <div className="bg-white ml-6">
+          <QRCodeCanvas
+            value="https://demo.villoguides.com"
+            size={200}
+            level="M"
+            marginSize={1}
+            className="-rotate-0.1"
+          />
         </div>
         <p className="text-[10px] text-[#5a5a58] m-0 mt-3 text-right">demo.villoguides.com</p>
       </div>

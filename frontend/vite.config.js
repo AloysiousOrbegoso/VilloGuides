@@ -18,40 +18,14 @@ export default defineConfig({
       // not take on for no benefit.
       injectRegister: false,
       manifest: false, // public/manifest.webmanifest is hand-written and already linked from index.html
-      workbox: {
+      // Hand-written service worker (src/sw.js), not the declarative
+      // generateSW config: the /api/guide route needs custom fallback logic
+      // generateSW's built-in strategies can't express (see src/sw.js).
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.js",
+      injectManifest: {
         globPatterns: ["**/*.{js,css,html,svg,woff,woff2}"],
-        // Serves the cached app shell for any offline navigation, so a
-        // returning guest's reload still renders the app instead of the
-        // browser's own connection-error page. Denylist keeps that fallback
-        // from ever swallowing the two dynamic routes below, which have
-        // their own explicit caching rules instead.
-        navigateFallback: "index.html",
-        navigateFallbackDenylist: [/^\/api\//, /^\/photos\//],
-        runtimeCaching: [
-          {
-            // Architecture 5.5: "Offline: Service worker caches the guide
-            // after first load." Stale-while-revalidate so a returning
-            // guest sees the last-known content instantly, then gets the
-            // latest the moment a network response comes back.
-            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname === "/api/guide",
-            handler: "StaleWhileRevalidate",
-            options: {
-              cacheName: "guide-content",
-              expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 * 30 },
-            },
-          },
-          {
-            // Photos are immutable per filename: a replacement upload always
-            // gets a new random UUID (see backend/src/services/storage.ts),
-            // so a filename that is already cached never needs re-fetching.
-            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith("/photos/"),
-            handler: "CacheFirst",
-            options: {
-              cacheName: "guide-photos",
-              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
-            },
-          },
-        ],
       },
     }),
   ],

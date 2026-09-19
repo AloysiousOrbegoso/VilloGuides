@@ -140,9 +140,26 @@ export function reportUrl(slug) {
  * does nothing, with no error to explain why. Gmail's own compose URL works
  * in any browser with no such dependency, so every "Contact us" link opens
  * that instead, pre-addressed to CONTACT_EMAIL (which already forwards to
- * the inbox that's actually read, per architecture 6.4).
+ * the inbox that's actually read, per architecture 6.4). body is optional:
+ * a short fill-in-the-blanks draft for the links where people usually don't
+ * know what to say (asking for a guide, arranging payment), left out for
+ * open-ended ones (a question on the FAQ or Terms page) where a template
+ * would just be in the way.
  */
-export function contactUrl(subject) {
+export function contactUrl(subject, body) {
   const params = new URLSearchParams({ view: "cm", fs: "1", to: CONTACT_EMAIL, su: subject });
+  if (body) params.set("body", body);
   return `https://mail.google.com/mail/?${params.toString()}`;
 }
+
+/** Pre-filled draft for the "get a guide made" contact links (landing hero, contact strip). */
+export const GUIDE_REQUEST_BODY = `Hi, I'd like to get a guidebook made.
+
+Number of properties:
+Property name(s) and address(es):
+
+I'm also interested in (delete what doesn't apply):
+- The dashboard (free with 2+ guides, a $5 one-time add-on for just one)
+- A white-label custom domain ($10 one-time add-on)
+
+Anything else:`;

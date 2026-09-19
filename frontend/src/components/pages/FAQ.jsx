@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CONTACT_EMAIL, contactUrl, demoUrl } from "../../lib/hostname";
 import { Icon } from "../ui/icons";
+import { Reveal } from "../ui/Reveal";
 import { BrandHeader, BrandFooter, BackLink } from "../sections/landing/LandingParts";
 
 /*
@@ -114,9 +115,14 @@ function FaqItem({ q, a, open, onToggle }) {
         className="w-full flex items-center justify-between gap-6 py-5 text-left bg-transparent border-0 cursor-pointer"
       >
         <span className="text-lg font-semibold text-black">{q}</span>
-        <Icon name={open ? "minus" : "plus"} className="text-xl text-brand-navy shrink-0" />
+        <Icon name={open ? "minus" : "plus"} className="text-xl text-brand-navy shrink-0 transition-transform duration-300" />
       </button>
-      {open && <p className="m-0 pb-6 pr-10 text-[#3c3c3a] leading-relaxed max-w-[62ch]">{a}</p>}
+      {/* Grid-rows trick animates to the answer's real height without measuring it in JS: the row is 0fr closed, 1fr open, and the transition animates that fraction. */}
+      <div className="grid transition-[grid-template-rows] duration-300 ease-out" style={{ gridTemplateRows: open ? "1fr" : "0fr" }}>
+        <div className="overflow-hidden">
+          <p className="m-0 pb-6 pr-10 text-[#3c3c3a] leading-relaxed max-w-[62ch]">{a}</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -138,7 +144,7 @@ export default function FAQ() {
           Answers to what people usually ask before getting a guide. Can't find yours? Email us directly.
         </p>
         {GROUPS.map((group) => (
-          <section key={group.heading} className="mb-12 last:mb-0">
+          <Reveal key={group.heading} as="section" className="mb-12 last:mb-0">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-muted m-0 mb-1">{group.heading}</h2>
             <div className="border-t border-[#dcdcd9]">
               {group.items.map(([q, a]) => {
@@ -146,7 +152,7 @@ export default function FAQ() {
                 return <FaqItem key={key} q={q} a={a} open={openKey === key} onToggle={() => setOpenKey(openKey === key ? null : key)} />;
               })}
             </div>
-          </section>
+          </Reveal>
         ))}
         <p className="text-muted m-0 mt-4">
           Still have a question? Email <a href={contactUrl("Question from the FAQ page")} target="_blank" rel="noopener noreferrer" className="text-brand-navy">{CONTACT_EMAIL}</a>.

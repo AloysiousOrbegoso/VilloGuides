@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
-import { CONTACT_EMAIL, contactUrl, demoUrl } from "../../../lib/hostname";
+import { CONTACT_EMAIL, contactUrl, demoUrl, GUIDE_REQUEST_BODY } from "../../../lib/hostname";
 import { KITCHEN_ICON } from "../../../lib/guideSchema";
 import { Button } from "../../ui/Button";
 import { Icon } from "../../ui/icons";
+import { Reveal } from "../../ui/Reveal";
 import logoLockup from "../../../assets/brand/logo-lockup.svg";
 import howItWorks1 from "../../../assets/landing/how-it-works-1.png";
 import howItWorks2 from "../../../assets/landing/how-it-works-2.png";
@@ -52,7 +53,7 @@ export function Hero() {
   return (
     <section className="max-w-[1120px] mx-auto px-5 sm:px-10">
       <div className="bg-lightgrey rounded-3xl grid lg:grid-cols-[1.05fr_0.95fr] overflow-hidden min-h-[600px]">
-        <div className="px-6 sm:px-16 py-16 sm:py-20 flex flex-col justify-center">
+        <div className="px-6 sm:px-16 py-16 sm:py-20 flex flex-col justify-center animate-fade-up">
           <h1 className="font-serif font-normal text-4xl sm:text-5xl leading-[1.08] text-black m-0 mb-6 tracking-tight">Your house manual, on every guest's phone</h1>
           <p className="text-xl leading-relaxed text-[#3c3c3a] m-0 mb-10 max-w-[28em]">
             We turn your property details into a guidebook with its own link. Guests scan the QR code at the door and find the Wi-Fi password, check-in steps, and
@@ -62,12 +63,12 @@ export function Hero() {
             <Button variant="primary" size="lg" icon="device-mobile" href={demoUrl()} className="!bg-maroon !border-maroon !text-[#F4E9E9]">
               Open the sample guide
             </Button>
-            <a href={contactUrl("Question from villoguides.com")} target="_blank" rel="noopener noreferrer" className="font-semibold text-charcoal underline underline-offset-4">
+            <a href={contactUrl("Want a guide for my place", GUIDE_REQUEST_BODY)} target="_blank" rel="noopener noreferrer" className="font-semibold text-charcoal underline underline-offset-4">
               {CONTACT_EMAIL}
             </a>
           </div>
         </div>
-        <div className="relative hidden lg:block">
+        <div className="relative hidden lg:block animate-fade-up [animation-delay:150ms]">
           <HeroArt />
         </div>
       </div>
@@ -175,8 +176,9 @@ export function HowItWorks() {
       {HOW_IT_WORKS_STEPS.map((step, i) => {
         const reverse = i % 2 === 1;
         return (
-          <div
+          <Reveal
             key={step.title}
+            as="div"
             className="flex flex-col-reverse items-center gap-9 text-center py-14 border-t border-[#dcdcd9] first:border-t-0 lg:grid lg:grid-cols-2 lg:gap-14 lg:text-left"
           >
             <div className={reverse ? "lg:order-2" : "lg:order-1"}>
@@ -187,7 +189,7 @@ export function HowItWorks() {
             <div className={reverse ? "lg:order-1" : "lg:order-2"}>
               <StepPhone shot={step.shot} alt={step.alt} tilt={step.tilt} />
             </div>
-          </div>
+          </Reveal>
         );
       })}
     </Section>
@@ -211,15 +213,17 @@ export function WhatsInside() {
   ];
   return (
     <Section>
-      <h2 className="font-serif font-normal text-3xl text-black m-0 mb-10">What a guide can include</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-9">
-        {items.map(([icon, label]) => (
-          <div key={label} className="flex items-center gap-3.5">
-            <Icon name={icon} className="text-xl text-brand-navy" />
-            <span className="text-md text-[#3c3c3a]">{label}</span>
-          </div>
-        ))}
-      </div>
+      <Reveal>
+        <h2 className="font-serif font-normal text-3xl text-black m-0 mb-10">What a guide can include</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-9">
+          {items.map(([icon, label]) => (
+            <div key={label} className="flex items-center gap-3.5">
+              <Icon name={icon} className="text-xl text-brand-navy" />
+              <span className="text-md text-[#3c3c3a]">{label}</span>
+            </div>
+          ))}
+        </div>
+      </Reveal>
     </Section>
   );
 }
@@ -227,7 +231,7 @@ export function WhatsInside() {
 export function Pricing() {
   return (
     <Section id="pricing">
-      <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-10 lg:gap-20">
+      <Reveal as="div" className="grid lg:grid-cols-[0.8fr_1.2fr] gap-10 lg:gap-20">
         <div>
           <h2 className="font-serif font-normal text-4xl text-black m-0 mb-4 leading-tight">Pricing</h2>
           <div className="flex items-baseline gap-3 mb-1">
@@ -259,7 +263,7 @@ export function Pricing() {
             </div>
           ))}
         </div>
-      </div>
+      </Reveal>
     </Section>
   );
 }
@@ -267,12 +271,12 @@ export function Pricing() {
 export function ContactStrip() {
   return (
     <div className="max-w-[1120px] mx-auto px-5 sm:px-10">
-      <div className="flex items-center justify-between gap-6 flex-wrap mt-24 sm:mt-38 pt-14 pb-24 border-t border-[#dcdcd9]">
+      <Reveal as="div" className="flex items-center justify-between gap-6 flex-wrap mt-24 sm:mt-38 pt-14 pb-24 border-t border-[#dcdcd9]">
         <h2 className="font-serif font-normal text-3xl sm:text-4xl text-black m-0">Want a guide for your place?</h2>
-        <Button variant="primary" size="lg" icon="mail" href={contactUrl("Want a guide for my place")} target="_blank" rel="noopener noreferrer" className="!bg-maroon !border-maroon !text-[#F4E9E9]">
+        <Button variant="primary" size="lg" icon="mail" href={contactUrl("Want a guide for my place", GUIDE_REQUEST_BODY)} target="_blank" rel="noopener noreferrer" className="!bg-maroon !border-maroon !text-[#F4E9E9]">
           Email {CONTACT_EMAIL}
         </Button>
-      </div>
+      </Reveal>
     </div>
   );
 }

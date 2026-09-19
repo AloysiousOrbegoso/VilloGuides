@@ -105,4 +105,4 @@ Guide styles live in `guide.css` and are all scoped under `.guide`, and guide th
 - There is no sign-in screen. Cloudflare Access guards `studio` and each client hostname, and the Worker verifies the identity.
 - Published guides carry the property's own palette. VilloGuides branding appears only as a small footer credit.
 - See `DESIGN.md` for the tokens, type scale, and the rules behind the interface.
-  -frontend build
+  -frontend
